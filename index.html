@@ -140,7 +140,7 @@
   .recipe-h{ font-family:var(--body); font-weight:700; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--green-deep); margin:0 0 10px; }
   .recipe-ing{ list-style:none; margin:0; padding:0; }
   .recipe-ing li{ font-size:.92rem; padding:5px 0; border-bottom:1px solid var(--green-soft); }
-  .ri-q{ font-family:var(--mono); font-weight:700; font-size:.8rem; color:var(--green-deep); display:inline-block; min-width:50px; }
+  .ri-q{ font-family:var(--mono); font-weight:700; font-size:.8rem; color:var(--green-deep); display:inline-block; min-width:50px; padding-right:10px; }
   .recipe-steps{ margin:0; padding:0; list-style:none; counter-reset:step; }
   .recipe-steps li{ position:relative; padding:0 0 14px 38px; counter-increment:step; font-size:.96rem; line-height:1.52; }
   .recipe-steps li::before{ content:counter(step); position:absolute; left:0; top:-1px; width:26px; height:26px; border-radius:8px; background:var(--green-soft); color:var(--green-deep); font-family:var(--mono); font-weight:700; font-size:.82rem; display:grid; place-items:center; }
@@ -193,7 +193,8 @@
         </div>
       </div>
       <div class="controls__spacer"></div>
-      <button id="share" class="btn btn--ghost">Share week</button>
+      <button id="share" class="btn btn--ghost">Share link</button>
+      <button id="email" class="btn btn--ghost">Email plan</button>
     </div>
   </div>
 
@@ -213,6 +214,7 @@
         <div class="shop__staples">Staples to check you have: <strong>salt, pepper, olive oil</strong> — plus everyday spices and a <strong>gluten-free soy sauce (tamari)</strong> for the stir-fries.</div>
         <div class="shop__actions">
           <button id="copy" class="btn btn--ghost btn--sm">Copy list</button>
+          <button id="copyAll" class="btn btn--ghost btn--sm">Copy full plan</button>
           <button id="clear" class="btn btn--ghost btn--sm">Reset checks</button>
           <button id="print" class="btn btn--ghost btn--sm">Print list</button>
         </div>
@@ -220,7 +222,7 @@
     </aside>
   </main>
 
-  <p class="footnote">Only the meals you <strong>Keep</strong> appear on the shopping list, so you shop for exactly what you want. Your plan is saved on this device — use <strong>Share week</strong> to send the same meals and list to someone else.</p>
+  <p class="footnote">Only the meals you <strong>Keep</strong> appear on the shopping list, so you shop for exactly what you want. Your plan is saved on this device. To send it to someone else, use <strong>Share link</strong> (reopens this app with the same meals, recipes, and list) or <strong>Email plan</strong> (a readable summary plus the link).</p>
 
   <!-- Recipe modal -->
   <div class="modal" id="modal" hidden>
@@ -446,7 +448,511 @@ const MEALS = [
     "Scramble the eggs in a hot pan, then set aside.",
     "Stir-fry the diced carrot and peas 2 to 3 minutes.",
     "Add the shrimp and cook 2 to 3 minutes until pink.",
-    "Add the rice, eggs, and gluten-free tamari, toss, and serve." ] }
+    "Add the rice, eggs, and gluten-free tamari, toss, and serve." ] },
+  { id:29, name:"Bacon-Wrapped Chicken + Brussels Sprouts", keto:true, time:"35 min", ing:[
+    ["chicken breast",1,"lb","meat"],["bacon",6,"slice","meat"],["brussels sprouts",1,"lb","produce"] ], steps:[
+    "Heat the oven to 400\u00b0F (205\u00b0C).",
+    "Wrap each chicken breast in bacon and set on a sheet pan.",
+    "Halve the brussels sprouts, toss with olive oil, salt, and pepper, and add to the pan.",
+    "Roast 25 to 30 minutes until the chicken is cooked and the bacon is crisp.",
+    "Rest 5 minutes, then serve." ] },
+  { id:30, name:"Cheeseburger Lettuce Wraps", keto:true, time:"20 min", ing:[
+    ["ground beef",1,"lb","meat"],["cheddar",0.5,"cup","dairy"],["lettuce",1,"head","produce"],["tomato",1,"ct","produce"],["onion",0.5,"ct","produce"] ], steps:[
+    "Brown the beef, breaking it up, and season with salt and pepper.",
+    "Melt the cheddar over the beef.",
+    "Separate the lettuce into large leaves for wraps.",
+    "Slice the tomato and onion.",
+    "Fill the leaves with beef, cheese, tomato, and onion." ] },
+  { id:31, name:"Pesto Salmon + Zucchini", keto:true, time:"25 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["pesto",0.25,"cup","pantry"],["zucchini",3,"ct","produce"] ], steps:[
+    "Heat the oven to 425\u00b0F (220\u00b0C).",
+    "Spread pesto over the salmon on a sheet pan.",
+    "Slice the zucchini, toss with oil, salt, and pepper, and add to the pan.",
+    "Roast 12 to 15 minutes until the salmon flakes.",
+    "Serve together." ] },
+  { id:32, name:"Buffalo Chicken Lettuce Wraps", keto:true, time:"25 min", ing:[
+    ["chicken breast",1,"lb","meat"],["hot sauce",0.25,"cup","pantry"],["butter",2,"tbsp","dairy"],["lettuce",1,"head","produce"],["celery",2,"ct","produce"] ], steps:[
+    "Cook the diced chicken until done.",
+    "Melt the butter with the hot sauce and toss the chicken to coat.",
+    "Separate the lettuce into leaves.",
+    "Slice the celery into sticks.",
+    "Fill the leaves with buffalo chicken and serve with celery." ] },
+  { id:33, name:"Steak + Mushroom Cream Sauce", keto:true, time:"30 min", ing:[
+    ["sirloin steak",1,"lb","meat"],["mushrooms",8,"oz","produce"],["heavy cream",0.5,"cup","dairy"],["garlic",2,"clove","produce"],["butter",2,"tbsp","dairy"] ], steps:[
+    "Season the steak with salt and pepper and sear 3 to 4 minutes per side; rest.",
+    "Saute the sliced mushrooms and garlic in butter.",
+    "Add the cream and simmer until it thickens.",
+    "Slice the steak against the grain.",
+    "Spoon the mushroom cream sauce over the steak." ] },
+  { id:34, name:"Egg Roll in a Bowl", keto:true, time:"20 min", ing:[
+    ["ground pork",1,"lb","meat"],["cabbage",0.5,"head","produce"],["carrot",1,"ct","produce"],["gluten-free tamari",2,"tbsp","pantry"],["ginger",1,"tbsp","produce"] ], steps:[
+    "Brown the pork, breaking it up.",
+    "Add the shredded cabbage and carrot.",
+    "Stir in the tamari and grated ginger.",
+    "Stir-fry 5 to 6 minutes until the cabbage softens.",
+    "Serve hot." ] },
+  { id:35, name:"Chicken Alfredo Zoodles", keto:true, time:"25 min", ing:[
+    ["chicken breast",1,"lb","meat"],["zucchini",3,"ct","produce"],["heavy cream",0.5,"cup","dairy"],["parmesan",0.5,"cup","dairy"],["garlic",2,"clove","produce"] ], steps:[
+    "Cook the sliced chicken until done.",
+    "Add the garlic, cream, and parmesan and simmer into a sauce.",
+    "Spiralize the zucchini into noodles.",
+    "Toss the zoodles in the sauce for 2 minutes.",
+    "Serve." ] },
+  { id:36, name:"Caprese Chicken", keto:true, time:"30 min", ing:[
+    ["chicken breast",1,"lb","meat"],["mozzarella",1,"cup","dairy"],["tomato",2,"ct","produce"],["basil",1,"bunch","produce"] ], steps:[
+    "Season the chicken with salt and pepper and pan-sear until nearly cooked.",
+    "Top with sliced tomato and mozzarella.",
+    "Cover the pan to melt the cheese.",
+    "Finish with torn basil.",
+    "Serve." ] },
+  { id:37, name:"Garlic Shrimp + Cauliflower Rice", keto:true, time:"20 min", ing:[
+    ["shrimp",1,"lb","seafood"],["cauliflower",1,"head","produce"],["garlic",3,"clove","produce"],["butter",3,"tbsp","dairy"] ], steps:[
+    "Pulse the cauliflower into rice-sized pieces.",
+    "Saute the cauliflower rice in half the butter 5 minutes and season.",
+    "In another pan, cook the shrimp with garlic in the rest of the butter 3 minutes.",
+    "Combine the shrimp and cauliflower rice.",
+    "Serve." ] },
+  { id:38, name:"Pork Tenderloin + Green Beans", keto:true, time:"35 min", ing:[
+    ["pork tenderloin",1,"lb","meat"],["green beans",0.75,"lb","produce"],["butter",2,"tbsp","dairy"],["garlic",2,"clove","produce"] ], steps:[
+    "Heat the oven to 400\u00b0F (205\u00b0C).",
+    "Season the tenderloin, sear on all sides, then roast 18 to 22 minutes; rest.",
+    "Saute the green beans with butter and garlic 5 to 6 minutes.",
+    "Slice the pork.",
+    "Serve with the green beans." ] },
+  { id:39, name:"Tuna Avocado Boats", keto:true, time:"10 min", ing:[
+    ["canned tuna",2,"can","seafood"],["avocado",2,"ct","produce"],["celery",1,"ct","produce"],["lemon",1,"ct","produce"] ], steps:[
+    "Drain the tuna and mix with diced celery and a squeeze of lemon.",
+    "Halve the avocados and scoop out a little flesh to widen the well.",
+    "Pile the tuna into the avocado halves.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:40, name:"Spinach Feta Stuffed Chicken", keto:true, time:"35 min", ing:[
+    ["chicken breast",1,"lb","meat"],["spinach",6,"oz","produce"],["feta",0.5,"cup","dairy"],["garlic",2,"clove","produce"] ], steps:[
+    "Heat the oven to 375\u00b0F (190\u00b0C).",
+    "Wilt the spinach with garlic, then mix with the feta.",
+    "Cut a pocket in each chicken breast and stuff with the mixture.",
+    "Sear the chicken, then bake 15 to 18 minutes.",
+    "Serve." ] },
+  { id:41, name:"Beef + Broccoli", keto:true, time:"25 min", ing:[
+    ["flank steak",1,"lb","meat"],["broccoli",1,"head","produce"],["gluten-free tamari",3,"tbsp","pantry"],["garlic",2,"clove","produce"],["ginger",1,"tbsp","produce"] ], steps:[
+    "Slice the steak thin.",
+    "Stir-fry the beef until browned, then remove.",
+    "Stir-fry the broccoli with garlic and ginger.",
+    "Return the beef with the tamari and toss 2 minutes.",
+    "Serve." ] },
+  { id:42, name:"Sausage + Peppers Skillet", keto:true, time:"25 min", ing:[
+    ["Italian sausage",1,"lb","meat"],["bell pepper",2,"ct","produce"],["onion",1,"ct","produce"],["garlic",2,"clove","produce"] ], steps:[
+    "Brown the sliced sausage.",
+    "Add the sliced peppers and onion.",
+    "Add the garlic and saute 6 to 8 minutes until soft.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:43, name:"Greek Chicken Bowl", keto:true, time:"25 min", ing:[
+    ["chicken breast",1,"lb","meat"],["cucumber",1,"ct","produce"],["tomato",1,"ct","produce"],["feta",0.5,"cup","dairy"],["olives",0.25,"cup","pantry"] ], steps:[
+    "Season the chicken with salt, pepper, and lemon, then pan-cook and slice.",
+    "Dice the cucumber and tomato.",
+    "Build bowls with chicken, vegetables, feta, and olives.",
+    "Drizzle with olive oil.",
+    "Serve." ] },
+  { id:44, name:"Philly Cheesesteak Bowl", keto:true, time:"25 min", ing:[
+    ["ribeye steak",1,"lb","meat"],["bell pepper",1,"ct","produce"],["onion",1,"ct","produce"],["provolone",1,"cup","dairy"] ], steps:[
+    "Slice the steak thin.",
+    "Sear the steak in a hot pan, then remove.",
+    "Saute the peppers and onion until soft.",
+    "Return the steak and top with provolone to melt.",
+    "Serve in bowls." ] },
+  { id:45, name:"Tuscan Butter Salmon", keto:true, time:"25 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["heavy cream",0.5,"cup","dairy"],["sun-dried tomatoes",0.25,"cup","pantry"],["spinach",6,"oz","produce"],["garlic",2,"clove","produce"] ], steps:[
+    "Sear the salmon, then remove.",
+    "Saute the garlic, then add the cream and sun-dried tomatoes.",
+    "Stir in the spinach to wilt.",
+    "Return the salmon to the sauce.",
+    "Simmer 2 minutes and serve." ] },
+  { id:46, name:"Egg + Cheese Breakfast Muffins", keto:true, time:"25 min", ing:[
+    ["eggs",8,"ct","dairy"],["cheddar",0.5,"cup","dairy"],["spinach",4,"oz","produce"],["bacon",4,"slice","meat"] ], steps:[
+    "Heat the oven to 375\u00b0F (190\u00b0C) and grease a muffin tin.",
+    "Cook and crumble the bacon and wilt the spinach.",
+    "Whisk the eggs with salt and pepper.",
+    "Divide the bacon, spinach, and cheddar into the cups, then pour the egg over.",
+    "Bake 18 to 20 minutes until set." ] },
+  { id:47, name:"Lamb Chops + Asparagus", keto:true, time:"25 min", ing:[
+    ["lamb chops",1,"lb","meat"],["asparagus",1,"bunch","produce"],["garlic",2,"clove","produce"],["butter",2,"tbsp","dairy"] ], steps:[
+    "Season the chops with salt and pepper.",
+    "Sear 3 to 4 minutes per side, then rest.",
+    "Saute the asparagus with butter and garlic 4 to 5 minutes.",
+    "Serve the chops with the asparagus.",
+    "Spoon any pan butter over the top." ] },
+  { id:48, name:"Chicken Bacon Ranch Cauliflower Bake", keto:true, time:"40 min", ing:[
+    ["chicken breast",1,"lb","meat"],["bacon",4,"slice","meat"],["cauliflower",1,"head","produce"],["cheddar",1,"cup","dairy"],["ranch dressing",0.25,"cup","pantry"] ], steps:[
+    "Heat the oven to 375\u00b0F (190\u00b0C).",
+    "Cook and dice the chicken and cook and crumble the bacon.",
+    "Steam the cauliflower florets until just tender.",
+    "Toss everything with the ranch in a baking dish and top with cheddar.",
+    "Bake 20 minutes until bubbly." ] },
+  { id:49, name:"Zucchini Lasagna", keto:true, time:"50 min", ing:[
+    ["zucchini",3,"ct","produce"],["ground beef",1,"lb","meat"],["marinara",1,"cup","pantry"],["ricotta",1,"cup","dairy"],["mozzarella",1,"cup","dairy"] ], steps:[
+    "Heat the oven to 375\u00b0F (190\u00b0C).",
+    "Slice the zucchini lengthwise into planks and pat dry.",
+    "Brown the beef and mix with the marinara.",
+    "Layer zucchini, meat sauce, and ricotta, repeat, and top with mozzarella.",
+    "Bake 30 minutes, then rest 10 minutes." ] },
+  { id:50, name:"Cauliflower Shrimp Fried Rice", keto:true, time:"20 min", ing:[
+    ["shrimp",1,"lb","seafood"],["cauliflower",1,"head","produce"],["eggs",2,"ct","dairy"],["carrot",1,"ct","produce"],["gluten-free tamari",2,"tbsp","pantry"] ], steps:[
+    "Pulse the cauliflower into rice-sized pieces.",
+    "Scramble the eggs, then set aside.",
+    "Saute the diced carrot, then add the shrimp and cook 3 minutes.",
+    "Add the cauliflower rice, eggs, and tamari and toss.",
+    "Serve." ] },
+  { id:51, name:"Baked Chicken Wings + Ranch", keto:true, time:"45 min", ing:[
+    ["chicken wings",2,"lb","meat"],["celery",2,"ct","produce"],["ranch dressing",0.25,"cup","pantry"] ], steps:[
+    "Heat the oven to 425\u00b0F (220\u00b0C).",
+    "Pat the wings dry and season with salt and pepper.",
+    "Bake 40 to 45 minutes, flipping once, until crisp.",
+    "Cut the celery into sticks.",
+    "Serve the wings with celery and ranch." ] },
+  { id:52, name:"Steak Cobb Salad", keto:true, time:"25 min", ing:[
+    ["sirloin steak",1,"lb","meat"],["romaine",1,"head","produce"],["eggs",2,"ct","dairy"],["avocado",1,"ct","produce"],["bacon",3,"slice","meat"] ], steps:[
+    "Hard-boil the eggs and cook and crumble the bacon.",
+    "Season and sear the steak, rest, then slice.",
+    "Chop the romaine.",
+    "Top with steak, egg, avocado, and bacon.",
+    "Drizzle with olive oil." ] },
+  { id:53, name:"Shrimp Avocado Salad", keto:true, time:"15 min", ing:[
+    ["shrimp",1,"lb","seafood"],["avocado",2,"ct","produce"],["cherry tomatoes",1,"cup","produce"],["lime",1,"ct","produce"],["cilantro",0.5,"bunch","produce"] ], steps:[
+    "Cook the shrimp 3 minutes, then cool.",
+    "Dice the avocado and halve the tomatoes.",
+    "Toss with lime juice and chopped cilantro.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:54, name:"Pork Chops + Creamed Kale", keto:true, time:"30 min", ing:[
+    ["pork chops",1,"lb","meat"],["kale",1,"bunch","produce"],["heavy cream",0.5,"cup","dairy"],["parmesan",0.25,"cup","dairy"],["garlic",2,"clove","produce"] ], steps:[
+    "Season the chops, sear 4 to 5 minutes per side, then rest.",
+    "Saute the garlic, then add chopped kale to wilt.",
+    "Add the cream and parmesan and simmer to thicken.",
+    "Serve the chops over the creamed kale.",
+    "Season to taste." ] },
+  { id:55, name:"Salmon Cakes + Aioli", keto:true, time:"25 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["eggs",1,"ct","dairy"],["almond flour",0.25,"cup","pantry"],["lemon",1,"ct","produce"],["garlic",1,"clove","produce"],["mayonnaise",0.25,"cup","pantry"] ], steps:[
+    "Flake cooked or canned salmon into a bowl.",
+    "Mix with the egg and almond flour, then form into patties.",
+    "Pan-fry 3 to 4 minutes per side until golden.",
+    "Stir minced garlic and lemon into the mayonnaise for a quick aioli.",
+    "Serve the cakes with the aioli." ] },
+  { id:56, name:"Chicken Parmesan + Zoodles", keto:true, time:"35 min", ing:[
+    ["chicken breast",1,"lb","meat"],["almond flour",0.5,"cup","pantry"],["eggs",1,"ct","dairy"],["marinara",1,"cup","pantry"],["mozzarella",1,"cup","dairy"],["zucchini",3,"ct","produce"] ], steps:[
+    "Heat the oven to 400\u00b0F (205\u00b0C).",
+    "Dip the chicken in beaten egg, then almond flour.",
+    "Pan-fry until golden and place in a baking dish.",
+    "Top with marinara and mozzarella and bake 12 to 15 minutes.",
+    "Spiralize and saute the zucchini, then serve the chicken over the zoodles." ] },
+  { id:57, name:"Bunless Sloppy Joes + Cauliflower Mash", keto:true, time:"35 min", ing:[
+    ["ground beef",1,"lb","meat"],["tomato sauce",1,"can","pantry"],["bell pepper",1,"ct","produce"],["onion",1,"ct","produce"],["cauliflower",1,"head","produce"] ], steps:[
+    "Steam the cauliflower and mash with salt and pepper.",
+    "Brown the beef with diced pepper and onion.",
+    "Add the tomato sauce and simmer 10 minutes.",
+    "Season to taste.",
+    "Spoon the sloppy joe mix over the cauliflower mash." ] },
+  { id:58, name:"Blackened Tilapia + Slaw", keto:true, time:"20 min", ing:[
+    ["tilapia fillet",1,"lb","seafood"],["cabbage",0.5,"head","produce"],["carrot",1,"ct","produce"],["lime",1,"ct","produce"],["mayonnaise",0.25,"cup","pantry"] ], steps:[
+    "Rub the tilapia with salt, pepper, and any cajun spices.",
+    "Sear 3 minutes per side until blackened.",
+    "Shred the cabbage and carrot.",
+    "Toss the slaw with mayonnaise and lime.",
+    "Serve the fish over the slaw." ] },
+  { id:59, name:"Antipasto Salad", keto:true, time:"15 min", ing:[
+    ["salami",4,"oz","meat"],["mozzarella",1,"cup","dairy"],["olives",0.25,"cup","pantry"],["tomato",1,"ct","produce"],["mixed greens",1,"bag","produce"] ], steps:[
+    "Chop the salami and mozzarella.",
+    "Halve the tomatoes.",
+    "Toss the greens with olive oil, salt, and pepper.",
+    "Top with salami, mozzarella, olives, and tomato.",
+    "Serve." ] },
+  { id:60, name:"Teriyaki Chicken + Rice", keto:false, time:"30 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",1,"cup","pantry"],["gluten-free tamari",3,"tbsp","pantry"],["honey",2,"tbsp","pantry"],["ginger",1,"tbsp","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Cook the diced chicken until done.",
+    "Add the tamari, honey, and grated ginger and simmer to a glaze.",
+    "Serve the chicken over the rice.",
+    "Garnish as you like." ] },
+  { id:61, name:"Black Bean Quesadillas", keto:false, time:"20 min", ing:[
+    ["gluten-free tortillas",1,"pkg","pantry"],["black beans",1,"can","pantry"],["cheddar",1,"cup","dairy"],["salsa",0.5,"cup","pantry"] ], steps:[
+    "Mash the black beans with salt and pepper.",
+    "Spread beans and cheddar on the tortillas and fold.",
+    "Cook in a dry skillet until golden on both sides.",
+    "Cut into wedges.",
+    "Serve with salsa." ] },
+  { id:62, name:"Chicken Burrito Bowl", keto:false, time:"30 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",1,"cup","pantry"],["black beans",1,"can","pantry"],["corn",1,"cup","produce"],["salsa",0.5,"cup","pantry"] ], steps:[
+    "Cook the rice per package directions.",
+    "Season and cook the chicken, then slice.",
+    "Warm the beans and corn.",
+    "Build bowls with rice, beans, corn, and chicken.",
+    "Top with salsa." ] },
+  { id:63, name:"Beef + Bean Chili", keto:false, time:"40 min", ing:[
+    ["ground beef",1,"lb","meat"],["kidney beans",1,"can","pantry"],["diced tomatoes",1,"can","pantry"],["onion",1,"ct","produce"],["bell pepper",1,"ct","produce"] ], steps:[
+    "Brown the beef with diced onion and pepper.",
+    "Add the tomatoes, beans, and chili spices.",
+    "Simmer 25 minutes.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:64, name:"Shrimp Tacos", keto:false, time:"25 min", ing:[
+    ["shrimp",1,"lb","seafood"],["corn tortillas",1,"pkg","pantry"],["cabbage",0.5,"head","produce"],["lime",1,"ct","produce"],["avocado",1,"ct","produce"] ], steps:[
+    "Season the shrimp and cook 3 minutes.",
+    "Warm the tortillas.",
+    "Shred the cabbage and slice the avocado.",
+    "Fill the tortillas with shrimp, cabbage, and avocado.",
+    "Squeeze lime over the top." ] },
+  { id:65, name:"Loaded Baked Potatoes", keto:false, time:"50 min", ing:[
+    ["potato",2,"lb","produce"],["cheddar",1,"cup","dairy"],["bacon",4,"slice","meat"],["sour cream",0.5,"cup","dairy"],["green onion",2,"ct","produce"] ], steps:[
+    "Heat the oven to 400\u00b0F (205\u00b0C) and bake the potatoes 45 minutes until tender.",
+    "Cook and crumble the bacon.",
+    "Split the potatoes and fluff the insides.",
+    "Top with cheddar, bacon, and sour cream.",
+    "Finish with sliced green onion." ] },
+  { id:66, name:"Chickpea Curry + Rice", keto:false, time:"30 min", ing:[
+    ["chickpeas",1,"can","pantry"],["coconut milk",1,"can","pantry"],["curry paste",2,"tbsp","pantry"],["rice",1,"cup","pantry"],["onion",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Saute the diced onion until soft.",
+    "Add the curry paste, chickpeas, and coconut milk.",
+    "Simmer 15 minutes.",
+    "Serve over the rice." ] },
+  { id:67, name:"Turkey Meatballs + GF Pasta", keto:false, time:"35 min", ing:[
+    ["ground turkey",1,"lb","meat"],["gluten-free pasta",1,"pkg","pantry"],["marinara",1,"cup","pantry"],["parmesan",0.25,"cup","dairy"],["eggs",1,"ct","dairy"] ], steps:[
+    "Mix the turkey with the egg, salt, and pepper, then roll into meatballs.",
+    "Brown the meatballs, add the marinara, and simmer 12 minutes.",
+    "Cook the pasta per package directions.",
+    "Combine the pasta with the meatballs and sauce.",
+    "Top with parmesan." ] },
+  { id:68, name:"Salmon Teriyaki Bowl", keto:false, time:"30 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["rice",1,"cup","pantry"],["gluten-free tamari",3,"tbsp","pantry"],["honey",2,"tbsp","pantry"],["broccoli",1,"head","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Steam the broccoli.",
+    "Glaze the salmon with tamari and honey and bake 12 to 15 minutes.",
+    "Flake the salmon.",
+    "Build bowls with rice, broccoli, and salmon." ] },
+  { id:69, name:"Veggie Stir Fry + Rice", keto:false, time:"25 min", ing:[
+    ["rice",1,"cup","pantry"],["broccoli",1,"head","produce"],["bell pepper",1,"ct","produce"],["carrot",2,"ct","produce"],["gluten-free tamari",3,"tbsp","pantry"] ], steps:[
+    "Cook the rice per package directions.",
+    "Stir-fry the broccoli, pepper, and carrot 5 to 6 minutes.",
+    "Add the tamari.",
+    "Serve over the rice.",
+    "Add chili if you like heat." ] },
+  { id:70, name:"Pork Carnitas Bowl", keto:false, time:"6\u20138 hr (slow cooker)", ing:[
+    ["pork shoulder",2,"lb","meat"],["rice",1,"cup","pantry"],["lime",2,"ct","produce"],["onion",1,"ct","produce"],["salsa",0.5,"cup","pantry"] ], steps:[
+    "Season the pork with salt, pepper, and spices.",
+    "Slow-cook on low 6 to 8 hours until it shreds easily.",
+    "Shred the pork and squeeze lime over it.",
+    "Cook the rice per package directions.",
+    "Build bowls with rice, carnitas, onion, and salsa." ] },
+  { id:71, name:"Tuna Rice Bowl", keto:false, time:"15 min", ing:[
+    ["canned tuna",2,"can","seafood"],["rice",1,"cup","pantry"],["cucumber",1,"ct","produce"],["green onion",2,"ct","produce"],["gluten-free tamari",2,"tbsp","pantry"] ], steps:[
+    "Cook the rice per package directions.",
+    "Drain the tuna.",
+    "Dice the cucumber and slice the green onion.",
+    "Build bowls with rice, tuna, and vegetables.",
+    "Drizzle with tamari." ] },
+  { id:72, name:"Chicken Tortilla Soup", keto:false, time:"40 min", ing:[
+    ["chicken breast",1,"lb","meat"],["diced tomatoes",1,"can","pantry"],["black beans",1,"can","pantry"],["chicken broth",4,"cup","pantry"],["tortilla chips",1,"bag","pantry"] ], steps:[
+    "Simmer the chicken in the broth with tomatoes and beans 20 minutes.",
+    "Shred the chicken and return it to the pot.",
+    "Season with cumin, salt, and pepper.",
+    "Ladle into bowls.",
+    "Top with crushed tortilla chips." ] },
+  { id:73, name:"Beef + Broccoli over Rice", keto:false, time:"25 min", ing:[
+    ["flank steak",1,"lb","meat"],["broccoli",1,"head","produce"],["rice",1,"cup","pantry"],["gluten-free tamari",3,"tbsp","pantry"],["garlic",2,"clove","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Slice and stir-fry the beef, then remove.",
+    "Stir-fry the broccoli with garlic.",
+    "Return the beef with the tamari.",
+    "Serve over the rice." ] },
+  { id:74, name:"Stuffed Sweet Potatoes", keto:false, time:"50 min", ing:[
+    ["sweet potato",2,"ct","produce"],["black beans",1,"can","pantry"],["cheddar",0.5,"cup","dairy"],["salsa",0.5,"cup","pantry"],["green onion",2,"ct","produce"] ], steps:[
+    "Heat the oven to 400\u00b0F (205\u00b0C) and bake the sweet potatoes 45 minutes.",
+    "Warm the beans.",
+    "Split the potatoes and fluff the insides.",
+    "Top with beans, cheddar, and salsa.",
+    "Finish with green onion." ] },
+  { id:75, name:"GF Spaghetti + Meat Sauce", keto:false, time:"35 min", ing:[
+    ["gluten-free pasta",1,"pkg","pantry"],["ground beef",1,"lb","meat"],["marinara",1,"cup","pantry"],["onion",1,"ct","produce"],["garlic",2,"clove","produce"] ], steps:[
+    "Brown the beef with diced onion and garlic.",
+    "Add the marinara and simmer 15 minutes.",
+    "Cook the pasta per package directions.",
+    "Toss the pasta with the sauce.",
+    "Serve." ] },
+  { id:76, name:"Huevos Rancheros", keto:false, time:"25 min", ing:[
+    ["eggs",4,"ct","dairy"],["corn tortillas",1,"pkg","pantry"],["black beans",1,"can","pantry"],["salsa",0.5,"cup","pantry"],["cheddar",0.5,"cup","dairy"] ], steps:[
+    "Warm the tortillas and beans.",
+    "Fry the eggs.",
+    "Place the eggs on the tortillas over the beans.",
+    "Spoon salsa over the top.",
+    "Finish with cheddar." ] },
+  { id:77, name:"Chicken + Rice Soup", keto:false, time:"40 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",0.75,"cup","pantry"],["carrot",2,"ct","produce"],["celery",2,"ct","produce"],["chicken broth",6,"cup","pantry"] ], steps:[
+    "Saute the diced carrot and celery.",
+    "Add the broth and rice and simmer 15 minutes.",
+    "Add the diced chicken and cook 10 minutes.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:78, name:"Honey Garlic Salmon + Rice", keto:false, time:"30 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["rice",1,"cup","pantry"],["honey",2,"tbsp","pantry"],["garlic",2,"clove","produce"],["green beans",0.5,"lb","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Saute the green beans.",
+    "Sear the salmon, then add honey and garlic to glaze.",
+    "Serve the salmon and beans over the rice.",
+    "Spoon any glaze over the top." ] },
+  { id:79, name:"Loaded Nachos", keto:false, time:"25 min", ing:[
+    ["tortilla chips",1,"bag","pantry"],["ground beef",1,"lb","meat"],["cheddar",1,"cup","dairy"],["black beans",1,"can","pantry"],["salsa",0.5,"cup","pantry"] ], steps:[
+    "Brown the beef with spices.",
+    "Spread the chips on a sheet pan.",
+    "Top with beef, beans, and cheddar.",
+    "Bake at 400\u00b0F (205\u00b0C) until melted.",
+    "Finish with salsa." ] },
+  { id:80, name:"Quinoa Tabbouleh + Grilled Chicken", keto:false, time:"30 min", ing:[
+    ["quinoa",1,"cup","pantry"],["chicken breast",1,"lb","meat"],["cucumber",1,"ct","produce"],["tomato",1,"ct","produce"],["lemon",1,"ct","produce"] ], steps:[
+    "Cook the quinoa and let it cool.",
+    "Dice the cucumber and tomato.",
+    "Toss the quinoa with the vegetables, lemon, and olive oil.",
+    "Grill and slice the chicken.",
+    "Serve the chicken over the tabbouleh." ] },
+  { id:81, name:"Sweet Potato Black Bean Tacos", keto:false, time:"30 min", ing:[
+    ["sweet potato",2,"ct","produce"],["black beans",1,"can","pantry"],["corn tortillas",1,"pkg","pantry"],["avocado",1,"ct","produce"],["lime",1,"ct","produce"] ], steps:[
+    "Heat the oven to 425\u00b0F (220\u00b0C).",
+    "Cube and roast the sweet potato 20 minutes.",
+    "Warm the beans and tortillas.",
+    "Fill the tortillas with sweet potato, beans, and avocado.",
+    "Squeeze lime over the top." ] },
+  { id:82, name:"Chicken Shawarma Bowl", keto:false, time:"30 min", ing:[
+    ["chicken thighs",1,"lb","meat"],["rice",1,"cup","pantry"],["cucumber",1,"ct","produce"],["tomato",1,"ct","produce"],["garlic",2,"clove","produce"] ], steps:[
+    "Toss the chicken with garlic, cumin, paprika, salt, and pepper.",
+    "Pan-cook the chicken, then slice.",
+    "Cook the rice per package directions.",
+    "Dice the cucumber and tomato.",
+    "Build bowls with rice, chicken, and vegetables and drizzle with olive oil." ] },
+  { id:83, name:"Chicken Pad Thai", keto:false, time:"30 min", ing:[
+    ["rice noodles",1,"pkg","pantry"],["chicken breast",1,"lb","meat"],["eggs",2,"ct","dairy"],["peanut butter",2,"tbsp","pantry"],["gluten-free tamari",3,"tbsp","pantry"] ], steps:[
+    "Soak the rice noodles per package directions.",
+    "Cook the diced chicken, push it aside, and scramble the eggs.",
+    "Whisk the peanut butter with the tamari and a little water for sauce.",
+    "Toss the noodles, chicken, egg, and sauce together.",
+    "Serve." ] },
+  { id:84, name:"Beef Bulgogi Bowl", keto:false, time:"30 min", ing:[
+    ["flank steak",1,"lb","meat"],["rice",1,"cup","pantry"],["gluten-free tamari",3,"tbsp","pantry"],["honey",1,"tbsp","pantry"],["green onion",2,"ct","produce"] ], steps:[
+    "Slice the steak thin and toss with the tamari and honey.",
+    "Cook the rice per package directions.",
+    "Sear the beef in a hot pan 3 to 4 minutes.",
+    "Serve over the rice.",
+    "Top with sliced green onion." ] },
+  { id:85, name:"Lentil + Veggie Curry", keto:false, time:"40 min", ing:[
+    ["lentils",1,"cup","pantry"],["coconut milk",1,"can","pantry"],["curry paste",2,"tbsp","pantry"],["carrot",2,"ct","produce"],["spinach",4,"oz","produce"] ], steps:[
+    "Saute the diced carrot.",
+    "Add the lentils, curry paste, coconut milk, and 2 cups of water.",
+    "Simmer 25 minutes until the lentils are tender.",
+    "Stir in the spinach to wilt.",
+    "Season and serve." ] },
+  { id:86, name:"GF Mac + Cheese + Broccoli", keto:false, time:"30 min", ing:[
+    ["gluten-free pasta",1,"pkg","pantry"],["cheddar",2,"cup","dairy"],["milk",1,"cup","dairy"],["butter",2,"tbsp","dairy"],["broccoli",1,"head","produce"] ], steps:[
+    "Cook the pasta per package directions.",
+    "Steam the broccoli.",
+    "Melt the butter, then add the milk and cheddar to make a sauce.",
+    "Toss the pasta and broccoli in the cheese sauce.",
+    "Serve." ] },
+  { id:87, name:"Sausage + White Bean Stew", keto:false, time:"40 min", ing:[
+    ["Italian sausage",1,"lb","meat"],["white beans",1,"can","pantry"],["diced tomatoes",1,"can","pantry"],["kale",1,"bunch","produce"],["garlic",2,"clove","produce"] ], steps:[
+    "Brown the sliced sausage.",
+    "Add the garlic, tomatoes, beans, and 2 cups of water.",
+    "Simmer 15 minutes.",
+    "Stir in the chopped kale to wilt.",
+    "Season and serve." ] },
+  { id:88, name:"Shrimp + Polenta", keto:false, time:"30 min", ing:[
+    ["shrimp",1,"lb","seafood"],["polenta",1,"cup","pantry"],["garlic",2,"clove","produce"],["butter",2,"tbsp","dairy"],["parmesan",0.25,"cup","dairy"] ], steps:[
+    "Cook the polenta per package directions with butter and parmesan.",
+    "Saute the shrimp with garlic 3 minutes.",
+    "Spoon the shrimp over the creamy polenta.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:89, name:"Chicken Enchilada Bowl", keto:false, time:"35 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",1,"cup","pantry"],["enchilada sauce",1,"can","pantry"],["cheddar",0.5,"cup","dairy"],["black beans",1,"can","pantry"] ], steps:[
+    "Cook the rice per package directions.",
+    "Cook and shred the chicken.",
+    "Warm the enchilada sauce with the chicken and beans.",
+    "Build bowls with rice and the enchilada mix.",
+    "Top with cheddar." ] },
+  { id:90, name:"Salmon Poke Bowl", keto:false, time:"20 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["rice",1,"cup","pantry"],["cucumber",1,"ct","produce"],["avocado",1,"ct","produce"],["gluten-free tamari",3,"tbsp","pantry"] ], steps:[
+    "Cook the rice and let it cool slightly.",
+    "Cube sushi-grade salmon and toss with the tamari.",
+    "Dice the cucumber and avocado.",
+    "Build bowls with rice, salmon, and vegetables.",
+    "Drizzle with more tamari." ] },
+  { id:91, name:"Turkey Taco Rice Skillet", keto:false, time:"30 min", ing:[
+    ["ground turkey",1,"lb","meat"],["rice",1,"cup","pantry"],["salsa",0.5,"cup","pantry"],["corn",1,"cup","produce"],["cheddar",0.5,"cup","dairy"] ], steps:[
+    "Brown the turkey with taco spices.",
+    "Add cooked rice, salsa, and corn.",
+    "Stir to combine and heat through.",
+    "Top with cheddar.",
+    "Serve." ] },
+  { id:92, name:"Veggie Quesadillas", keto:false, time:"20 min", ing:[
+    ["gluten-free tortillas",1,"pkg","pantry"],["bell pepper",1,"ct","produce"],["mushrooms",6,"oz","produce"],["cheddar",1,"cup","dairy"],["onion",0.5,"ct","produce"] ], steps:[
+    "Saute the sliced pepper, mushrooms, and onion.",
+    "Layer the vegetables and cheddar on the tortillas and fold.",
+    "Cook in a dry skillet until golden.",
+    "Cut into wedges.",
+    "Serve." ] },
+  { id:93, name:"Baked Ziti", keto:false, time:"45 min", ing:[
+    ["gluten-free pasta",1,"pkg","pantry"],["marinara",1,"cup","pantry"],["ricotta",1,"cup","dairy"],["mozzarella",1,"cup","dairy"],["ground beef",1,"lb","meat"] ], steps:[
+    "Heat the oven to 375\u00b0F (190\u00b0C).",
+    "Brown the beef and mix with the marinara.",
+    "Cook the pasta per package directions.",
+    "Layer pasta, ricotta, and sauce in a dish and top with mozzarella.",
+    "Bake 25 minutes until bubbly." ] },
+  { id:94, name:"Fish Tacos", keto:false, time:"25 min", ing:[
+    ["cod fillet",1,"lb","seafood"],["corn tortillas",1,"pkg","pantry"],["cabbage",0.5,"head","produce"],["lime",1,"ct","produce"],["sour cream",0.25,"cup","dairy"] ], steps:[
+    "Season the cod and pan-cook 3 to 4 minutes per side, then flake.",
+    "Warm the tortillas.",
+    "Shred the cabbage.",
+    "Fill the tortillas with fish and cabbage.",
+    "Top with sour cream and a squeeze of lime." ] },
+  { id:95, name:"Beef Stew + Potatoes", keto:false, time:"60 min", ing:[
+    ["beef stew meat",1,"lb","meat"],["potato",1,"lb","produce"],["carrot",3,"ct","produce"],["onion",1,"ct","produce"],["beef broth",4,"cup","pantry"] ], steps:[
+    "Brown the stew meat on all sides.",
+    "Add the broth, diced potato, carrot, and onion.",
+    "Simmer 45 minutes until everything is tender.",
+    "Season with salt and pepper.",
+    "Serve." ] },
+  { id:96, name:"Coconut Curry Shrimp + Rice", keto:false, time:"30 min", ing:[
+    ["shrimp",1,"lb","seafood"],["coconut milk",1,"can","pantry"],["curry paste",2,"tbsp","pantry"],["rice",1,"cup","pantry"],["bell pepper",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Saute the sliced pepper.",
+    "Add the curry paste and coconut milk and simmer.",
+    "Add the shrimp and cook 3 minutes.",
+    "Serve over the rice." ] },
+  { id:97, name:"Steak Burrito Bowl", keto:false, time:"30 min", ing:[
+    ["sirloin steak",1,"lb","meat"],["rice",1,"cup","pantry"],["black beans",1,"can","pantry"],["corn",1,"cup","produce"],["avocado",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Season and sear the steak, rest, then slice.",
+    "Warm the beans and corn.",
+    "Build bowls with rice, beans, corn, and steak.",
+    "Top with avocado." ] },
+  { id:98, name:"GF Pasta Primavera", keto:false, time:"30 min", ing:[
+    ["gluten-free pasta",1,"pkg","pantry"],["zucchini",2,"ct","produce"],["cherry tomatoes",1,"cup","produce"],["parmesan",0.25,"cup","dairy"],["garlic",2,"clove","produce"] ], steps:[
+    "Cook the pasta per package directions.",
+    "Saute the sliced zucchini, tomatoes, and garlic.",
+    "Toss with the pasta and a splash of pasta water.",
+    "Finish with parmesan.",
+    "Serve." ] },
+  { id:99, name:"Breakfast Burrito Bowl", keto:false, time:"25 min", ing:[
+    ["eggs",6,"ct","dairy"],["potato",1,"lb","produce"],["salsa",0.5,"cup","pantry"],["cheddar",0.5,"cup","dairy"],["green onion",2,"ct","produce"] ], steps:[
+    "Dice and pan-fry the potato until crisp.",
+    "Scramble the eggs.",
+    "Build bowls with potato and eggs.",
+    "Top with salsa, cheddar, and green onion.",
+    "Serve." ] },
+  { id:100, name:"Lemon Chicken + Potatoes", keto:false, time:"40 min", ing:[
+    ["chicken thighs",1,"lb","meat"],["potato",1,"lb","produce"],["lemon",1,"ct","produce"],["garlic",3,"clove","produce"],["green beans",0.5,"lb","produce"] ], steps:[
+    "Heat the oven to 425\u00b0F (220\u00b0C).",
+    "Toss the potato with oil, salt, and pepper and roast 20 minutes.",
+    "Add the chicken (seasoned with lemon and garlic) and green beans.",
+    "Roast 20 minutes more until the chicken is cooked.",
+    "Serve." ] }
 ];
 
 const BY_ID = new Map(MEALS.map(m => [m.id, m]));
@@ -677,12 +1183,38 @@ document.getElementById("ketoSeg").addEventListener("click", e => {
   render(new Set(state.weekIds.filter(id => !before.has(id)))); save();
   toast(state.ketoCount + " keto meals this week");
 });
+function shareUrl(){
+  return location.origin + location.pathname + "#m=" + state.weekIds.join(".") + (state.kept.size ? "&k=" + [...state.kept].join(".") : "");
+}
+function fullPlanText(){
+  const meals = keptMeals();
+  let out = "MEAL PLAN — The Weeknight Table\n" + shareUrl() + "\n\n";
+  out += "THIS WEEK\n";
+  meals.forEach((m, i) => { out += (i+1) + ". " + m.name + "  (" + m.time + ")\n"; });
+  out += "\n" + listText() + "\nRECIPES\n\n";
+  meals.forEach(m => {
+    out += m.name + "  —  " + m.time + ", serves 2\n";
+    out += "Ingredients: " + m.ing.map(i => itemText(i[0], i[1], i[2])).join(", ") + "\n";
+    m.steps.forEach((s, i) => { out += "  " + (i+1) + ". " + s + "\n"; });
+    out += "\n";
+  });
+  return out;
+}
+
 document.getElementById("share").addEventListener("click", async () => {
-  const hash = "#m=" + state.weekIds.join(".") + (state.kept.size ? "&k=" + [...state.kept].join(".") : "");
-  const url = location.origin + location.pathname + hash;
+  const url = shareUrl();
   const ok = await copyText(url);
   toast(ok ? "Share link copied to clipboard" : "Copy failed — link is in the address bar");
-  if(!ok){ history.replaceState(null, "", hash); }
+  if(!ok){ history.replaceState(null, "", url.slice(url.indexOf("#"))); }
+});
+document.getElementById("email").addEventListener("click", () => {
+  if(!state.kept.size){ toast("Keep some meals first"); return; }
+  let body = "Here is our meal plan for the week.\n\n";
+  body += "Open the interactive version (tap any meal for its recipe, check off the shopping list):\n" + shareUrl() + "\n\n";
+  body += "MEALS\n";
+  keptMeals().forEach(m => { body += "- " + m.name + "  (" + m.time + ")\n"; });
+  body += "\n" + listText();
+  location.href = "mailto:?subject=" + encodeURIComponent("Our meal plan for the week") + "&body=" + encodeURIComponent(body);
 });
 document.getElementById("keepAll").addEventListener("click", () => {
   if(allKept()) state.kept.clear();
@@ -716,6 +1248,11 @@ document.getElementById("copy").addEventListener("click", async () => {
   if(!state.kept.size){ toast("Keep some meals first"); return; }
   const ok = await copyText(listText());
   toast(ok ? "Shopping list copied" : "Copy failed");
+});
+document.getElementById("copyAll").addEventListener("click", async () => {
+  if(!state.kept.size){ toast("Keep some meals first"); return; }
+  const ok = await copyText(fullPlanText());
+  toast(ok ? "Full plan copied — paste into an email or notes" : "Copy failed");
 });
 document.getElementById("clear").addEventListener("click", () => { state.checked.clear(); renderShop(); save(); toast("Reset the checklist"); });
 document.getElementById("print").addEventListener("click", () => {
