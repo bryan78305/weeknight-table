@@ -56,6 +56,17 @@
   @media (min-width:900px){ .layout{ grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:34px; align-items:start; } }
   .col-head{ font-size:1.18rem; font-weight:700; margin-bottom:14px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
   .col-head__hint{ font-family:var(--body); font-weight:500; font-size:.82rem; color:var(--ink-soft); letter-spacing:0; }
+  .meals-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
+  .meals-head .col-head{ margin-bottom:0; }
+  .textbtn{ font-family:var(--body); font-weight:600; font-size:.85rem; color:var(--green-deep); background:transparent; border:1px solid var(--green-line); border-radius:9px; padding:6px 11px; cursor:pointer; line-height:1; white-space:nowrap; transition:background .12s ease, border-color .12s ease; }
+  .textbtn:hover{ background:var(--green-soft); }
+  .textbtn:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+  .meals-hint{ margin:0 0 14px; font-size:.84rem; color:var(--ink-soft); }
+  .meals-hint strong{ color:var(--ink); font-weight:600; }
+  .shop-empty{ text-align:center; padding:24px 8px 10px; }
+  .shop-empty__title{ font-family:var(--display); font-weight:700; font-size:1rem; margin:0 0 6px; color:var(--ink); }
+  .shop-empty__body{ margin:0; font-size:.88rem; color:var(--ink-soft); line-height:1.5; }
+  .shop__panel.is-empty .shop__staples, .shop__panel.is-empty .shop__actions{ display:none; }
 
   /* Meal cards */
   .meal-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
@@ -145,7 +156,7 @@
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
 
   @media print{
-    .controls, .masthead__sub, .meal__index, .meal__actions, .keep, .shop__actions, .col-head__hint, .footnote, .toast{ display:none !important; }
+    .controls, .masthead__sub, .meal__index, .meal__actions, .keep, .textbtn, .meals-hint, .shop__actions, .col-head__hint, .footnote, .toast{ display:none !important; }
     body{ background:#fff; }
     .masthead{ background:#fff; color:#000; } .masthead__inner{ padding:0 0 12px; } .masthead__mark{ display:none; } .masthead__title{ color:#000; }
     .layout{ display:block; padding:0; }
@@ -188,7 +199,11 @@
 
   <main class="layout">
     <section class="meals" aria-label="This week's meals">
-      <h2 class="col-head">This week <span class="col-head__hint">Tap a meal for its recipe. Check “Keep” to lock it, then More options swaps the rest.</span></h2>
+      <div class="meals-head">
+        <h2 class="col-head">This week</h2>
+        <button id="keepAll" class="textbtn">Keep all</button>
+      </div>
+      <p class="meals-hint">Check <strong>Keep</strong> on the meals you want — only kept meals go on the shopping list. Tap a meal for its recipe, or <strong>More options</strong> to reshuffle the ones you haven't kept.</p>
       <ul id="mealList" class="meal-list"></ul>
     </section>
     <aside class="shop" aria-label="Shopping list">
@@ -198,14 +213,14 @@
         <div class="shop__staples">Staples to check you have: <strong>salt, pepper, olive oil</strong> — plus everyday spices and a <strong>gluten-free soy sauce (tamari)</strong> for the stir-fries.</div>
         <div class="shop__actions">
           <button id="copy" class="btn btn--ghost btn--sm">Copy list</button>
-          <button id="clear" class="btn btn--ghost btn--sm">Uncheck all</button>
+          <button id="clear" class="btn btn--ghost btn--sm">Reset checks</button>
           <button id="print" class="btn btn--ghost btn--sm">Print list</button>
         </div>
       </div>
     </aside>
   </main>
 
-  <p class="footnote">Quantities and times are rough guides sized for two people — adjust to taste. Your week and checkmarks are saved on this device; use <strong>Share week</strong> to send the exact same plan to someone else.</p>
+  <p class="footnote">Only the meals you <strong>Keep</strong> appear on the shopping list, so you shop for exactly what you want. Your plan is saved on this device — use <strong>Share week</strong> to send the same meals and list to someone else.</p>
 
   <!-- Recipe modal -->
   <div class="modal" id="modal" hidden>
@@ -520,20 +535,29 @@ function save(){
 }
 function loadStored(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)); }catch(e){ return null; } }
 function parseHash(){
-  const m = (location.hash || "").match(/m=([0-9.]+)/);
-  if(!m) return null;
-  const ids = m[1].split(".").map(Number).filter(n => BY_ID.has(n));
-  const uniq = [...new Set(ids)];
-  if(!uniq.length) return null;
-  if(uniq.length < WEEK){ const fill = sample(MEALS, WEEK - uniq.length, new Set(uniq)); uniq.push(...fill.map(x => x.id)); }
-  return uniq.slice(0, WEEK);
+  const h = location.hash || "";
+  const mm = h.match(/m=([0-9.]+)/);
+  if(!mm) return null;
+  let week = [...new Set(mm[1].split(".").map(Number).filter(n => BY_ID.has(n)))];
+  if(!week.length) return null;
+  if(week.length < WEEK){ week.push(...sample(MEALS, WEEK - week.length, new Set(week)).map(x => x.id)); }
+  week = week.slice(0, WEEK);
+  const km = h.match(/k=([0-9.]+)/);
+  const kept = km ? new Set(km[1].split(".").map(Number).filter(n => week.includes(n))) : new Set();
+  return { week, kept };
 }
 function clearHash(){ if(location.hash){ history.replaceState(null, "", location.pathname + location.search); } }
 
 const checkSVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>';
 
 function render(highlightIds){
-  const hi = highlightIds || new Set(state.weekIds);
+  renderMeals(highlightIds || new Set(state.weekIds));
+  renderShop();
+  updateKetoSeg();
+  updateKeepAll();
+}
+
+function renderMeals(hi){
   document.getElementById("mealList").innerHTML = state.weekIds.map((id, i) => {
     const m = BY_ID.get(id);
     const kept = state.kept.has(id);
@@ -556,17 +580,33 @@ function render(highlightIds){
         '</div>'+
       '</div></li>';
   }).join("");
+}
 
-  const meals = state.weekIds.map(id => BY_ID.get(id));
-  document.getElementById("shopList").innerHTML = buildList(meals).map(a =>
+function renderShop(){
+  const panel = document.querySelector(".shop__panel");
+  const list = document.getElementById("shopList");
+  const kept = state.weekIds.filter(id => state.kept.has(id)).map(id => BY_ID.get(id));
+  if(!kept.length){
+    panel.classList.add("is-empty");
+    list.innerHTML = '<div class="shop-empty"><p class="shop-empty__title">Nothing kept yet</p><p class="shop-empty__body">Check &ldquo;Keep&rdquo; on the meals you want this week and their ingredients will gather here.</p></div>';
+    return;
+  }
+  panel.classList.remove("is-empty");
+  list.innerHTML = buildList(kept).map(a =>
     '<div class="aisle"><h3 class="aisle__name">'+a.label+'</h3><ul class="aisle__items">'+
     a.items.map(it => {
       const checked = state.checked.has(it.key);
       return '<li class="item'+(checked?' is-checked':'')+'" data-key="'+it.key+'"><label class="item__row"><input type="checkbox" data-check="'+it.key+'"'+(checked?' checked':'')+'><span class="item__check">'+checkSVG+'</span><span class="item__qty">'+qtyLabel(it.qty,it.unit)+'</span><span class="item__name">'+it.name+'</span></label></li>';
     }).join("")+'</ul></div>'
   ).join("");
+}
 
+function updateKetoSeg(){
   document.querySelectorAll("#ketoSeg button").forEach(b => b.classList.toggle("is-active", Number(b.dataset.keto) === state.ketoCount));
+}
+function allKept(){ return state.weekIds.length > 0 && state.weekIds.every(id => state.kept.has(id)); }
+function updateKeepAll(){
+  document.getElementById("keepAll").textContent = allKept() ? "Keep none" : "Keep all";
 }
 
 /* Recipe modal */
@@ -616,9 +656,10 @@ async function copyText(text){
     catch(_){ return false; }
   }
 }
+function keptMeals(){ return state.weekIds.filter(id => state.kept.has(id)).map(id => BY_ID.get(id)); }
 function listText(){
   let out = "SHOPPING LIST — The Weeknight Table\n\n";
-  buildList(state.weekIds.map(id => BY_ID.get(id))).forEach(a => {
+  buildList(keptMeals()).forEach(a => {
     out += a.label.toUpperCase() + "\n";
     a.items.forEach(it => { out += "- " + itemText(it.name, it.qty, it.unit) + "\n"; });
     out += "\n";
@@ -637,16 +678,27 @@ document.getElementById("ketoSeg").addEventListener("click", e => {
   toast(state.ketoCount + " keto meals this week");
 });
 document.getElementById("share").addEventListener("click", async () => {
-  const url = location.origin + location.pathname + "#m=" + state.weekIds.join(".");
+  const hash = "#m=" + state.weekIds.join(".") + (state.kept.size ? "&k=" + [...state.kept].join(".") : "");
+  const url = location.origin + location.pathname + hash;
   const ok = await copyText(url);
   toast(ok ? "Share link copied to clipboard" : "Copy failed — link is in the address bar");
-  if(!ok){ history.replaceState(null, "", "#m=" + state.weekIds.join(".")); }
+  if(!ok){ history.replaceState(null, "", hash); }
+});
+document.getElementById("keepAll").addEventListener("click", () => {
+  if(allKept()) state.kept.clear();
+  else state.weekIds.forEach(id => state.kept.add(id));
+  clearHash();
+  render(new Set());
+  save();
 });
 document.getElementById("mealList").addEventListener("change", e => {
   const keep = e.target.closest("input[data-keep]"); if(!keep) return;
   const id = Number(keep.dataset.keep);
   if(keep.checked) state.kept.add(id); else state.kept.delete(id);
   const li = keep.closest(".meal"); if(li) li.classList.toggle("is-kept", keep.checked);
+  clearHash();
+  renderShop();
+  updateKeepAll();
   save();
 });
 document.getElementById("mealList").addEventListener("click", e => {
@@ -660,16 +712,23 @@ document.getElementById("shopList").addEventListener("change", e => {
   const li = c.closest(".item"); if(li) li.classList.toggle("is-checked", c.checked);
   save();
 });
-document.getElementById("copy").addEventListener("click", async () => { const ok = await copyText(listText()); toast(ok ? "Shopping list copied" : "Copy failed"); });
-document.getElementById("clear").addEventListener("click", () => { state.checked.clear(); render(new Set()); save(); toast("Cleared all checkmarks"); });
-document.getElementById("print").addEventListener("click", () => window.print());
+document.getElementById("copy").addEventListener("click", async () => {
+  if(!state.kept.size){ toast("Keep some meals first"); return; }
+  const ok = await copyText(listText());
+  toast(ok ? "Shopping list copied" : "Copy failed");
+});
+document.getElementById("clear").addEventListener("click", () => { state.checked.clear(); renderShop(); save(); toast("Reset the checklist"); });
+document.getElementById("print").addEventListener("click", () => {
+  if(!state.kept.size){ toast("Keep some meals first"); return; }
+  window.print();
+});
 
 (function init(){
   const shared = parseHash();
   const stored = loadStored();
   if(stored && typeof stored.keto === "number") state.ketoCount = clamp(stored.keto, 0, WEEK);
   if(shared){
-    state.weekIds = shared; state.kept = new Set(); state.checked = new Set();
+    state.weekIds = shared.week; state.kept = shared.kept; state.checked = new Set();
     render(); save(); toast("Loaded a shared week");
   } else if(stored && Array.isArray(stored.week) && stored.week.length === WEEK && stored.week.every(id => BY_ID.has(id))){
     state.weekIds = stored.week; state.kept = new Set((stored.kept || []).filter(id => BY_ID.has(id))); state.checked = new Set(stored.checked || []);
