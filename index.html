@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Weeknight Table — gluten-free meal planner</title>
+<meta name="description" content="Generate seven gluten-free dinners for the week, a few of them keto, with one consolidated shopping list and a recipe for every dish." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1d2a22; --ink-soft:#5c6b61; --paper:#f6f5ef; --card:#ffffff;
+    --green:#2f6b45; --green-deep:#234f34; --green-soft:#e9f1ea; --green-line:#cbddcf;
+    --honey:#b9791a; --honey-bg:#f6ead0; --honey-line:#e7d2a3; --line:#e6e3d8;
+    --display:'Bricolage Grotesque', system-ui, sans-serif;
+    --body:'Hanken Grotesk', system-ui, sans-serif;
+    --mono:'Space Mono', ui-monospace, monospace;
+    --shadow:0 1px 2px rgba(29,42,34,.04), 0 8px 24px rgba(29,42,34,.05);
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ margin:0; font-family:var(--body); color:var(--ink); background:var(--paper); line-height:1.5; font-size:16px; }
+  h1,h2,h3{ margin:0; font-family:var(--display); font-weight:700; letter-spacing:-.01em; }
+
+  /* Masthead */
+  .masthead{ background:var(--green-deep); color:#f3f7f2; background-image:radial-gradient(140% 120% at 0% 0%, #2c6242 0%, #234f34 55%, #1f4630 100%); }
+  .masthead__inner{ max-width:1120px; margin:0 auto; padding:30px 22px 32px; display:flex; align-items:center; gap:18px; }
+  .masthead__mark{ flex:none; width:54px; height:54px; border-radius:13px; display:grid; place-items:center; font-size:28px; line-height:1; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); }
+  .masthead__title{ font-weight:800; font-size:clamp(1.6rem, 4.4vw, 2.45rem); color:#fbfdfb; line-height:1.02; }
+  .masthead__sub{ margin:5px 0 0; color:#bcd3c2; font-size:clamp(.92rem, 2.4vw, 1.02rem); max-width:48ch; }
+
+  /* Controls */
+  .controls{ border-bottom:1px solid var(--line); background:rgba(255,255,255,.55); position:sticky; top:0; z-index:20; backdrop-filter:saturate(1.1) blur(6px); }
+  .controls__inner{ max-width:1120px; margin:0 auto; padding:12px 22px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .controls__spacer{ flex:1 1 auto; }
+  .btn{ font-family:var(--body); font-weight:600; font-size:.95rem; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:11px; padding:9px 15px; cursor:pointer; line-height:1; transition:transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+  .btn:hover{ border-color:var(--green-line); }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+  .btn--primary{ background:var(--green); color:#fff; border-color:var(--green); box-shadow:0 6px 16px rgba(47,107,69,.22); }
+  .btn--primary:hover{ background:var(--green-deep); border-color:var(--green-deep); }
+  .btn--ghost{ background:transparent; }
+  .btn--sm{ padding:7px 11px; font-size:.86rem; }
+  .keto-control{ display:flex; align-items:center; gap:9px; padding-left:4px; }
+  .keto-control__label{ font-size:.8rem; color:var(--ink-soft); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+  .seg{ display:inline-flex; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; }
+  .seg button{ font-family:var(--mono); font-size:.85rem; font-weight:700; border:0; background:transparent; color:var(--ink-soft); width:32px; height:30px; border-radius:7px; cursor:pointer; line-height:1; transition:background .12s ease, color .12s ease; }
+  .seg button:hover{ color:var(--ink); }
+  .seg button.is-active{ background:var(--green-soft); color:var(--green-deep); }
+  .seg button:focus-visible{ outline:2px solid var(--green); outline-offset:1px; }
+
+  /* Layout */
+  .layout{ max-width:1120px; margin:0 auto; padding:24px 22px 80px; display:grid; grid-template-columns:1fr; gap:26px; }
+  @media (min-width:900px){ .layout{ grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:34px; align-items:start; } }
+  .col-head{ font-size:1.18rem; font-weight:700; margin-bottom:14px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .col-head__hint{ font-family:var(--body); font-weight:500; font-size:.82rem; color:var(--ink-soft); letter-spacing:0; }
+
+  /* Meal cards */
+  .meal-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .meal{ position:relative; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--line); border-radius:var(--radius); padding:15px 16px 15px 15px; display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start; box-shadow:var(--shadow); }
+  .meal.is-kept{ border-left-color:var(--green); background:#fcfdfb; }
+  .meal__index{ font-family:var(--mono); font-weight:700; font-size:.8rem; background:var(--green-soft); color:var(--green-deep); width:26px; height:26px; border-radius:8px; display:grid; place-items:center; margin-top:2px; }
+  .meal__main{ min-width:0; }
+  .meal__topline{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .meal__name{ flex:1; font-size:1.06rem; font-weight:700; line-height:1.18; }
+  .meal__topline .keep{ margin-top:1px; }
+  .meal__tags{ display:flex; gap:6px; margin:7px 0 6px; }
+  .tag{ font-family:var(--body); font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:6px; line-height:1; }
+  .tag--gf{ background:var(--green-soft); color:var(--green-deep); border:1px solid var(--green-line); }
+  .tag--keto{ background:var(--honey-bg); color:var(--honey); border:1px solid var(--honey-line); }
+  .meal__ing{ margin:0; font-size:.88rem; color:var(--ink-soft); }
+  .meal__actions{ display:flex; gap:8px; margin-top:12px; }
+  .meal__btn{ font-family:var(--body); font-size:.84rem; font-weight:600; border-radius:9px; padding:7px 12px; cursor:pointer; line-height:1; display:inline-flex; align-items:center; gap:5px; transition:background .12s ease, border-color .12s ease, color .12s ease; }
+  .meal__btn--recipe{ background:var(--green-soft); color:var(--green-deep); border:1px solid var(--green-line); }
+  .meal__btn--recipe:hover{ background:#dcebdf; }
+  .meal__btn--swap{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); }
+  .meal__btn--swap:hover{ color:var(--green-deep); border-color:var(--green-line); background:var(--green-soft); }
+  .meal__btn:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+
+  /* keep checkbox */
+  .keep{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none; }
+  .keep input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .keep__box{ width:20px; height:20px; border-radius:6px; border:1.6px solid var(--green-line); background:#fff; display:grid; place-items:center; transition:background .12s ease, border-color .12s ease; }
+  .keep__box svg{ width:12px; height:12px; opacity:0; transform:scale(.6); transition:opacity .12s ease, transform .12s ease; stroke:#fff; }
+  .keep input:checked + .keep__box{ background:var(--green); border-color:var(--green); }
+  .keep input:checked + .keep__box svg{ opacity:1; transform:scale(1); }
+  .keep input:focus-visible + .keep__box{ outline:2px solid var(--green); outline-offset:2px; }
+  .keep__text{ font-size:.82rem; font-weight:600; color:var(--ink-soft); }
+  .meal.is-kept .keep__text{ color:var(--green-deep); }
+
+  @keyframes rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+  .anim{ animation:rise .34s cubic-bezier(.2,.7,.3,1) both; }
+
+  /* Shopping list */
+  .shop__panel{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow); }
+  @media (min-width:900px){ .shop__panel{ position:sticky; top:64px; } }
+  .shop-list{ display:flex; flex-direction:column; gap:16px; margin-top:4px; }
+  .aisle__name{ font-family:var(--body); font-weight:700; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--green-deep); padding-bottom:6px; border-bottom:1px solid var(--green-soft); margin-bottom:8px; }
+  .aisle__items{ list-style:none; margin:0; padding:0; }
+  .item__row{ display:flex; align-items:center; gap:11px; padding:5px 2px; cursor:pointer; border-radius:8px; }
+  .item__row:hover{ background:#faf9f4; }
+  .item input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .item__check{ flex:none; width:19px; height:19px; border-radius:6px; border:1.6px solid var(--line); background:#fff; display:grid; place-items:center; transition:background .12s ease, border-color .12s ease; }
+  .item__check svg{ width:11px; height:11px; opacity:0; stroke:#fff; }
+  .item input:checked + .item__check{ background:var(--green); border-color:var(--green); }
+  .item input:checked + .item__check svg{ opacity:1; }
+  .item input:focus-visible + .item__check{ outline:2px solid var(--green); outline-offset:2px; }
+  .item__qty{ font-family:var(--mono); font-weight:700; font-size:.82rem; color:var(--ink); min-width:38px; }
+  .item__name{ font-size:.95rem; }
+  .item.is-checked .item__qty, .item.is-checked .item__name{ color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--green-line); }
+  .shop__staples{ margin-top:16px; padding:11px 12px; border-radius:10px; background:var(--green-soft); color:var(--green-deep); font-size:.84rem; }
+  .shop__actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+
+  /* Recipe modal */
+  .modal[hidden]{ display:none; }
+  .modal{ position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:18px; }
+  .modal__scrim{ position:absolute; inset:0; background:rgba(20,30,24,.5); backdrop-filter:blur(2px); }
+  .modal__card{ position:relative; background:var(--card); border-radius:16px; max-width:660px; width:100%; max-height:88vh; overflow:auto; padding:24px 24px 20px; box-shadow:0 24px 60px rgba(20,30,24,.32); }
+  .modal__close{ position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:1.3rem; line-height:1; cursor:pointer; color:var(--ink-soft); }
+  .modal__close:hover{ border-color:var(--green-line); color:var(--ink); }
+  .modal__close:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+  .modal__title{ font-size:1.4rem; padding-right:40px; line-height:1.12; }
+  .modal__tags{ display:flex; gap:6px; margin:9px 0 6px; }
+  .modal__meta{ font-family:var(--mono); font-size:.82rem; color:var(--ink-soft); margin-bottom:18px; }
+  .recipe-cols{ display:grid; grid-template-columns:1fr; gap:20px; }
+  @media (min-width:560px){ .recipe-cols{ grid-template-columns:205px 1fr; gap:28px; } }
+  .recipe-h{ font-family:var(--body); font-weight:700; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--green-deep); margin:0 0 10px; }
+  .recipe-ing{ list-style:none; margin:0; padding:0; }
+  .recipe-ing li{ font-size:.92rem; padding:5px 0; border-bottom:1px solid var(--green-soft); }
+  .ri-q{ font-family:var(--mono); font-weight:700; font-size:.8rem; color:var(--green-deep); display:inline-block; min-width:50px; }
+  .recipe-steps{ margin:0; padding:0; list-style:none; counter-reset:step; }
+  .recipe-steps li{ position:relative; padding:0 0 14px 38px; counter-increment:step; font-size:.96rem; line-height:1.52; }
+  .recipe-steps li::before{ content:counter(step); position:absolute; left:0; top:-1px; width:26px; height:26px; border-radius:8px; background:var(--green-soft); color:var(--green-deep); font-family:var(--mono); font-weight:700; font-size:.82rem; display:grid; place-items:center; }
+  .recipe-steps li:last-child{ padding-bottom:0; }
+  .modal__actions{ margin-top:22px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; }
+  body.modal-open{ overflow:hidden; }
+
+  .toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(14px); background:var(--ink); color:#f3f7f2; padding:10px 16px; border-radius:11px; font-size:.9rem; font-weight:500; box-shadow:0 10px 30px rgba(29,42,34,.25); opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:70; }
+  .toast.is-on{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .footnote{ max-width:1120px; margin:0 auto; padding:0 22px 40px; color:var(--ink-soft); font-size:.8rem; }
+  .footnote strong{ color:var(--ink); }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  @media print{
+    .controls, .masthead__sub, .meal__index, .meal__actions, .keep, .shop__actions, .col-head__hint, .footnote, .toast{ display:none !important; }
+    body{ background:#fff; }
+    .masthead{ background:#fff; color:#000; } .masthead__inner{ padding:0 0 12px; } .masthead__mark{ display:none; } .masthead__title{ color:#000; }
+    .layout{ display:block; padding:0; }
+    .meal, .shop__panel{ box-shadow:none; border-color:#bbb; break-inside:avoid; } .shop__panel{ margin-top:18px; position:static; }
+    /* When a recipe is open, print only the recipe */
+    body.modal-open .masthead, body.modal-open .controls, body.modal-open .layout, body.modal-open .footnote{ display:none !important; }
+    body.modal-open .modal{ position:static; display:block; padding:0; place-items:start; }
+    body.modal-open .modal__scrim, body.modal-open .modal__close, body.modal-open .modal__actions{ display:none !important; }
+    body.modal-open .modal__card{ box-shadow:none; max-width:none; max-height:none; overflow:visible; padding:0; }
+  }
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead__inner">
+      <div class="masthead__mark">🍃</div>
+      <div>
+        <h1 class="masthead__title">The Weeknight Table</h1>
+        <p class="masthead__sub">Seven gluten-free dinners for the week, a few of them keto, with one shopping list that covers them all — and a recipe for every dish.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="controls__inner">
+      <button id="more" class="btn btn--primary"><span>↻</span> More options</button>
+      <button id="fresh" class="btn btn--ghost">Start fresh</button>
+      <div class="keto-control" role="group" aria-label="Number of keto meals this week">
+        <span class="keto-control__label">Keto meals</span>
+        <div class="seg" id="ketoSeg">
+          <button type="button" data-keto="2">2</button>
+          <button type="button" data-keto="3" class="is-active">3</button>
+          <button type="button" data-keto="4">4</button>
+        </div>
+      </div>
+      <div class="controls__spacer"></div>
+      <button id="share" class="btn btn--ghost">Share week</button>
+    </div>
+  </div>
+
+  <main class="layout">
+    <section class="meals" aria-label="This week's meals">
+      <h2 class="col-head">This week <span class="col-head__hint">Tap a meal for its recipe. Check “Keep” to lock it, then More options swaps the rest.</span></h2>
+      <ul id="mealList" class="meal-list"></ul>
+    </section>
+    <aside class="shop" aria-label="Shopping list">
+      <div class="shop__panel">
+        <h2 class="col-head">Shopping list</h2>
+        <div id="shopList" class="shop-list"></div>
+        <div class="shop__staples">Staples to check you have: <strong>salt, pepper, olive oil</strong> — plus everyday spices and a <strong>gluten-free soy sauce (tamari)</strong> for the stir-fries.</div>
+        <div class="shop__actions">
+          <button id="copy" class="btn btn--ghost btn--sm">Copy list</button>
+          <button id="clear" class="btn btn--ghost btn--sm">Uncheck all</button>
+          <button id="print" class="btn btn--ghost btn--sm">Print list</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <p class="footnote">Quantities and times are rough guides sized for two people — adjust to taste. Your week and checkmarks are saved on this device; use <strong>Share week</strong> to send the exact same plan to someone else.</p>
+
+  <!-- Recipe modal -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal__scrim" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal__close" id="modalClose" data-close aria-label="Close recipe">×</button>
+      <h2 class="modal__title" id="modalTitle"></h2>
+      <div class="modal__tags" id="modalTags"></div>
+      <div class="modal__meta" id="modalMeta"></div>
+      <div class="recipe-cols">
+        <div>
+          <p class="recipe-h">You will need</p>
+          <ul class="recipe-ing" id="modalIng"></ul>
+        </div>
+        <div>
+          <p class="recipe-h">Steps</p>
+          <ol class="recipe-steps" id="modalSteps"></ol>
+        </div>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--ghost btn--sm" id="modalPrint">Print recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* Meal data — ingredient = [name, qty, unit, cat]; cat: produce|meat|seafood|dairy|pantry */
+const MEALS = [
+  { id:1, name:"Bunless Bacon Cheeseburgers + Side Salad", keto:true, time:"25 min", ing:[
+    ["ground beef",1,"lb","meat"],["bacon",4,"slice","meat"],["cheddar",0.5,"cup","dairy"],["mixed greens",1,"bag","produce"],["tomato",1,"ct","produce"],["onion",0.5,"ct","produce"] ], steps:[
+    "Cook the bacon in a skillet until crisp, then set aside.",
+    "Form the beef into 2 patties and season well with salt and pepper.",
+    "Cook the patties 3 to 4 minutes per side, topping with cheddar to melt at the end.",
+    "Toss the greens, sliced tomato, and onion with a little olive oil.",
+    "Top each patty with bacon and serve alongside the salad." ] },
+  { id:2, name:"Garlic Butter Steak + Asparagus", keto:true, time:"25 min", ing:[
+    ["sirloin steak",1,"lb","meat"],["asparagus",1,"bunch","produce"],["butter",3,"tbsp","dairy"],["garlic",3,"clove","produce"] ], steps:[
+    "Pat the steak dry and season generously with salt and pepper.",
+    "Sear in a hot skillet 3 to 4 minutes per side for medium, then rest 5 minutes.",
+    "Lower the heat, add butter and minced garlic, and spoon it over the steak.",
+    "Sauté the asparagus in the same pan 4 to 5 minutes until tender-crisp.",
+    "Slice the steak against the grain and serve with the asparagus." ] },
+  { id:3, name:"Baked Salmon + Roasted Broccoli", keto:true, time:"30 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["broccoli",1,"head","produce"],["lemon",1,"ct","produce"] ], steps:[
+    "Heat the oven to 425°F (220°C).",
+    "Toss broccoli florets with olive oil, salt, and pepper on a sheet pan.",
+    "Add the salmon, season, and squeeze over half the lemon.",
+    "Roast 12 to 15 minutes until the salmon flakes and the broccoli browns.",
+    "Finish with the remaining lemon." ] },
+  { id:4, name:"Chicken Thighs + Creamed Spinach", keto:true, time:"30 min", ing:[
+    ["chicken thighs",1,"lb","meat"],["spinach",10,"oz","produce"],["heavy cream",0.5,"cup","dairy"],["parmesan",0.25,"cup","dairy"] ], steps:[
+    "Season the thighs with salt and pepper.",
+    "Sear skin-side down 6 to 7 minutes, then flip and cook 5 minutes more; remove.",
+    "Wilt the spinach in the same pan.",
+    "Add the cream and parmesan and simmer until thick.",
+    "Return the chicken to coat, then serve over the creamed spinach." ] },
+  { id:5, name:"Avocado + Egg Breakfast Bowl", keto:true, time:"15 min", ing:[
+    ["eggs",4,"ct","dairy"],["avocado",1,"ct","produce"],["bacon",4,"slice","meat"],["cherry tomatoes",1,"cup","produce"] ], steps:[
+    "Cook the bacon until crisp, then set aside.",
+    "Fry or scramble the eggs to your liking in a little of the bacon fat.",
+    "Halve and slice the avocado.",
+    "Halve the cherry tomatoes.",
+    "Build bowls with eggs, avocado, tomatoes, and crumbled bacon." ] },
+  { id:6, name:"Zucchini Noodle Meatballs", keto:true, time:"35 min", ing:[
+    ["ground beef",1,"lb","meat"],["zucchini",3,"ct","produce"],["parmesan",0.25,"cup","dairy"],["marinara",1,"cup","pantry"],["eggs",1,"ct","dairy"] ], steps:[
+    "Mix the beef with the egg, half the parmesan, salt, and pepper, then roll into meatballs.",
+    "Brown the meatballs in a skillet on all sides.",
+    "Add the marinara, cover, and simmer 12 to 15 minutes until cooked through.",
+    "Spiralize or peel the zucchini into noodles and sauté 2 to 3 minutes.",
+    "Top the zoodles with meatballs, sauce, and the remaining parmesan." ] },
+  { id:7, name:"Cobb Salad", keto:true, time:"20 min", ing:[
+    ["romaine",1,"head","produce"],["chicken breast",0.5,"lb","meat"],["bacon",3,"slice","meat"],["eggs",2,"ct","dairy"],["avocado",1,"ct","produce"],["cheddar",0.25,"cup","dairy"] ], steps:[
+    "Hard-boil the eggs for about 9 minutes, then peel and halve.",
+    "Cook the bacon until crisp and crumble it.",
+    "Season and pan-cook the chicken breast, then slice.",
+    "Chop the romaine and arrange on plates.",
+    "Top with chicken, bacon, egg, avocado, tomato, and cheddar." ] },
+  { id:8, name:"Pork Chops + Cauliflower Mash", keto:true, time:"35 min", ing:[
+    ["pork chops",1,"lb","meat"],["cauliflower",1,"head","produce"],["butter",2,"tbsp","dairy"],["heavy cream",0.25,"cup","dairy"] ], steps:[
+    "Steam or boil the cauliflower until very soft, about 12 minutes.",
+    "Mash with butter, cream, salt, and pepper until smooth.",
+    "Season the chops and sear 4 to 5 minutes per side until cooked through.",
+    "Rest the chops 3 minutes.",
+    "Serve the chops over the cauliflower mash." ] },
+  { id:9, name:"Shrimp Scampi Zoodles", keto:true, time:"20 min", ing:[
+    ["shrimp",1,"lb","seafood"],["zucchini",3,"ct","produce"],["garlic",3,"clove","produce"],["butter",3,"tbsp","dairy"],["parmesan",0.25,"cup","dairy"] ], steps:[
+    "Spiralize the zucchini into noodles.",
+    "Melt the butter and cook the garlic 1 minute.",
+    "Add the shrimp and cook 2 to 3 minutes until pink.",
+    "Toss in the zoodles for 2 minutes to warm through.",
+    "Finish with parmesan, salt, and pepper." ] },
+  { id:10, name:"Chicken Caesar Salad (no croutons)", keto:true, time:"20 min", ing:[
+    ["romaine",1,"head","produce"],["chicken breast",0.75,"lb","meat"],["parmesan",0.5,"cup","dairy"] ], steps:[
+    "Season and pan-cook the chicken breast, then slice.",
+    "Chop the romaine into a large bowl.",
+    "Toss with a gluten-free Caesar dressing and most of the parmesan.",
+    "Top with the sliced chicken and remaining parmesan.",
+    "Add cracked pepper to finish." ] },
+  { id:11, name:"Cheesy Egg + Sausage Scramble", keto:true, time:"15 min", ing:[
+    ["eggs",6,"ct","dairy"],["breakfast sausage",0.5,"lb","meat"],["cheddar",0.5,"cup","dairy"],["bell pepper",1,"ct","produce"] ], steps:[
+    "Brown the sausage in a skillet, breaking it up.",
+    "Add the diced bell pepper and cook 3 to 4 minutes.",
+    "Whisk the eggs, pour them in, and stir gently until just set.",
+    "Fold in the cheddar to melt.",
+    "Season and serve." ] },
+  { id:12, name:"Lemon Herb Chicken + Green Beans", keto:true, time:"30 min", ing:[
+    ["chicken thighs",1,"lb","meat"],["green beans",0.75,"lb","produce"],["butter",2,"tbsp","dairy"],["lemon",1,"ct","produce"] ], steps:[
+    "Season the thighs with salt, pepper, and a squeeze of lemon.",
+    "Sear skin-side down 6 to 7 minutes, then flip and cook 5 to 6 minutes more; remove.",
+    "Add the butter and green beans to the pan.",
+    "Sauté the beans 5 to 6 minutes until tender-crisp.",
+    "Squeeze over the remaining lemon and serve with the chicken." ] },
+  { id:13, name:"Steak Fajita Bowl (no rice)", keto:true, time:"25 min", ing:[
+    ["sirloin steak",1,"lb","meat"],["bell pepper",2,"ct","produce"],["onion",1,"ct","produce"],["avocado",1,"ct","produce"],["cheddar",0.25,"cup","dairy"] ], steps:[
+    "Slice the steak, peppers, and onion into strips.",
+    "Sear the steak in a hot pan 2 to 3 minutes, then remove.",
+    "Sauté the peppers and onion 5 to 6 minutes until charred.",
+    "Return the steak and season with salt and pepper.",
+    "Build bowls and top with avocado and cheddar." ] },
+  { id:14, name:"Baked Cod + Garlic Spinach", keto:true, time:"25 min", ing:[
+    ["cod fillet",1,"lb","seafood"],["spinach",10,"oz","produce"],["garlic",3,"clove","produce"],["butter",2,"tbsp","dairy"] ], steps:[
+    "Heat the oven to 400°F (205°C).",
+    "Season the cod and bake 12 to 15 minutes until it flakes.",
+    "Melt the butter and cook the garlic 1 minute.",
+    "Add the spinach and wilt 2 to 3 minutes.",
+    "Serve the cod over the garlic spinach." ] },
+  { id:15, name:"Grilled Chicken + Rice + Veggies", keto:false, time:"35 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",1,"cup","pantry"],["broccoli",1,"head","produce"],["bell pepper",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Season the chicken and grill or pan-cook 5 to 6 minutes per side, then slice.",
+    "Sauté or roast the broccoli and bell pepper until tender.",
+    "Season everything with salt and pepper.",
+    "Serve the chicken and veggies over the rice." ] },
+  { id:16, name:"Beef Tacos (corn tortillas)", keto:false, time:"25 min", ing:[
+    ["ground beef",1,"lb","meat"],["corn tortillas",1,"pkg","pantry"],["cheddar",0.5,"cup","dairy"],["lettuce",0.5,"head","produce"],["tomato",1,"ct","produce"],["onion",0.5,"ct","produce"] ], steps:[
+    "Brown the beef, breaking it up, then drain excess fat.",
+    "Season with salt, pepper, and any taco spices.",
+    "Warm the corn tortillas in a dry pan.",
+    "Chop the lettuce, tomato, and onion.",
+    "Fill the tortillas with beef, veggies, and cheddar." ] },
+  { id:17, name:"Quinoa + Black Bean Bowl", keto:false, time:"25 min", ing:[
+    ["quinoa",1,"cup","pantry"],["black beans",1,"can","pantry"],["bell pepper",1,"ct","produce"],["avocado",1,"ct","produce"],["corn",1,"cup","produce"] ], steps:[
+    "Cook the quinoa per package directions.",
+    "Warm the black beans with a pinch of salt.",
+    "Dice the bell pepper and avocado.",
+    "Warm the corn through.",
+    "Build bowls with quinoa, beans, pepper, corn, and avocado." ] },
+  { id:18, name:"Sweet Potato + Turkey Chili", keto:false, time:"40 min", ing:[
+    ["ground turkey",1,"lb","meat"],["sweet potato",2,"ct","produce"],["black beans",1,"can","pantry"],["tomato",2,"ct","produce"],["onion",1,"ct","produce"] ], steps:[
+    "Brown the turkey with the diced onion.",
+    "Add the diced sweet potato, chopped tomato, and black beans.",
+    "Stir in a splash of water and your chili spices.",
+    "Simmer 20 to 25 minutes until the sweet potato is tender.",
+    "Season to taste and serve." ] },
+  { id:19, name:"Rice Noodle Stir Fry", keto:false, time:"25 min", ing:[
+    ["rice noodles",1,"pkg","pantry"],["chicken breast",0.75,"lb","meat"],["broccoli",1,"head","produce"],["bell pepper",1,"ct","produce"],["carrot",2,"ct","produce"] ], steps:[
+    "Soak or cook the rice noodles per package directions.",
+    "Stir-fry the sliced chicken until cooked through.",
+    "Add the broccoli, bell pepper, and carrot and stir-fry 4 to 5 minutes.",
+    "Toss in the noodles with a splash of gluten-free tamari.",
+    "Serve hot." ] },
+  { id:20, name:"Chicken Fajita Rice Bowl", keto:false, time:"30 min", ing:[
+    ["chicken breast",1,"lb","meat"],["rice",1,"cup","pantry"],["bell pepper",2,"ct","produce"],["onion",1,"ct","produce"],["avocado",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Slice the chicken, peppers, and onion.",
+    "Sauté the chicken until cooked, then remove.",
+    "Char the peppers and onion 5 to 6 minutes, then return the chicken.",
+    "Build bowls with rice and top with avocado." ] },
+  { id:21, name:"Lentil Soup", keto:false, time:"40 min", ing:[
+    ["lentils",1.5,"cup","pantry"],["carrot",3,"ct","produce"],["celery",3,"ct","produce"],["onion",1,"ct","produce"],["tomato",1,"ct","produce"] ], steps:[
+    "Dice the onion, carrot, and celery, then sauté until soft.",
+    "Add the lentils, chopped tomato, and 4 cups of water or broth.",
+    "Bring to a boil, then simmer 25 to 30 minutes until the lentils are tender.",
+    "Season with salt and pepper.",
+    "Blend a ladleful for body if you like a thicker soup." ] },
+  { id:22, name:"Salmon + Sweet Potato + Green Beans", keto:false, time:"35 min", ing:[
+    ["salmon fillet",1,"lb","seafood"],["sweet potato",2,"ct","produce"],["green beans",0.75,"lb","produce"] ], steps:[
+    "Heat the oven to 425°F (220°C).",
+    "Cube the sweet potato, toss with oil, and roast 15 minutes.",
+    "Add the salmon and green beans to the pan and season.",
+    "Roast 12 to 15 minutes more until the salmon flakes.",
+    "Serve everything together." ] },
+  { id:23, name:"Stuffed Bell Peppers", keto:false, time:"45 min", ing:[
+    ["bell pepper",4,"ct","produce"],["ground beef",1,"lb","meat"],["rice",0.75,"cup","pantry"],["tomato",1,"ct","produce"],["cheddar",0.5,"cup","dairy"] ], steps:[
+    "Heat the oven to 375°F (190°C) and halve and seed the peppers.",
+    "Cook the rice per package directions.",
+    "Brown the beef, then mix with the rice and chopped tomato.",
+    "Fill the peppers, top with cheddar, and set in a baking dish.",
+    "Bake 25 to 30 minutes until the peppers are tender." ] },
+  { id:24, name:"Chicken Curry + Rice", keto:false, time:"35 min", ing:[
+    ["chicken thighs",1,"lb","meat"],["coconut milk",1,"can","pantry"],["curry paste",2,"tbsp","pantry"],["rice",1,"cup","pantry"],["onion",1,"ct","produce"] ], steps:[
+    "Cook the rice per package directions.",
+    "Sauté the diced onion until soft.",
+    "Add the chicken and curry paste and cook 3 to 4 minutes.",
+    "Pour in the coconut milk and simmer 15 minutes until the chicken is cooked.",
+    "Serve over the rice." ] },
+  { id:25, name:"Pulled Pork + Coleslaw", keto:false, time:"6–8 hr (slow cooker)", ing:[
+    ["pork shoulder",2,"lb","meat"],["cabbage",0.5,"head","produce"],["carrot",2,"ct","produce"] ], steps:[
+    "Season the pork shoulder with salt, pepper, and your spices.",
+    "Slow-cook on low 6 to 8 hours until it shreds easily.",
+    "Shred with two forks and toss in the cooking juices.",
+    "Shred the cabbage and carrot and toss with a little oil and vinegar for slaw.",
+    "Serve the pork with the slaw." ] },
+  { id:26, name:"Baked Cod + Roasted Potatoes", keto:false, time:"40 min", ing:[
+    ["cod fillet",1,"lb","seafood"],["potato",1,"lb","produce"],["green beans",0.5,"lb","produce"] ], steps:[
+    "Heat the oven to 425°F (220°C) and cube the potatoes.",
+    "Toss the potatoes with oil and roast 20 minutes.",
+    "Add the cod and green beans and season.",
+    "Roast 12 to 15 minutes more until the cod flakes.",
+    "Serve everything together." ] },
+  { id:27, name:"Sausage + Veggie Sheet Pan", keto:false, time:"35 min", ing:[
+    ["sausage",1,"lb","meat"],["potato",1,"lb","produce"],["bell pepper",1,"ct","produce"],["onion",1,"ct","produce"],["zucchini",2,"ct","produce"] ], steps:[
+    "Heat the oven to 425°F (220°C).",
+    "Slice the sausage, potato, peppers, onion, and zucchini.",
+    "Toss with olive oil, salt, and pepper on a sheet pan.",
+    "Roast 25 to 30 minutes, stirring once, until browned.",
+    "Serve hot." ] },
+  { id:28, name:"Shrimp Fried Rice", keto:false, time:"20 min", ing:[
+    ["shrimp",1,"lb","seafood"],["rice",1,"cup","pantry"],["eggs",2,"ct","dairy"],["carrot",2,"ct","produce"],["peas",1,"cup","produce"] ], steps:[
+    "Cook the rice (or use cold leftover rice for the best texture).",
+    "Scramble the eggs in a hot pan, then set aside.",
+    "Stir-fry the diced carrot and peas 2 to 3 minutes.",
+    "Add the shrimp and cook 2 to 3 minutes until pink.",
+    "Add the rice, eggs, and gluten-free tamari, toss, and serve." ] }
+];
+
+const BY_ID = new Map(MEALS.map(m => [m.id, m]));
+const KETO_POOL = MEALS.filter(m => m.keto);
+const NON_POOL  = MEALS.filter(m => !m.keto);
+const WEEK = 7;
+const STORE_KEY = "wtt.v1";
+
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+function shuffle(arr){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sample(pool, n, exclude){ if(n<=0) return []; const ex = exclude || new Set(); return shuffle(pool.filter(m => !ex.has(m.id))).slice(0, n); }
+
+const FRACTIONS = [[0.25,"¼"],[0.5,"½"],[0.75,"¾"],[0.33,"⅓"],[0.67,"⅔"]];
+function formatQty(n){
+  const whole = Math.floor(n + 1e-9), frac = n - whole; let glyph = "";
+  for(const [v,g] of FRACTIONS){ if(Math.abs(frac - v) < 0.02){ glyph = g; break; } }
+  if(glyph) return whole > 0 ? (whole + glyph) : glyph;
+  if(frac < 0.02) return String(whole);
+  return String(Math.round(n * 100) / 100);
+}
+const PLURAL = new Set(["clove","slice","head","bunch","can","bag"]);
+function unitLabel(unit, qty){ if(!unit || unit === "ct") return ""; return (PLURAL.has(unit) && qty !== 1) ? unit + "s" : unit; }
+function qtyLabel(qty, unit){ const u = unitLabel(unit, qty); return u ? (formatQty(qty) + " " + u) : formatQty(qty); }
+function itemText(name, qty, unit){ const u = unitLabel(unit, qty); return u ? (formatQty(qty) + " " + u + " " + name) : (formatQty(qty) + " " + name); }
+
+const AISLES = [
+  { key:"produce", label:"Produce", cats:["produce"] },
+  { key:"meat", label:"Meat & Seafood", cats:["meat","seafood"] },
+  { key:"dairy", label:"Dairy & Eggs", cats:["dairy"] },
+  { key:"pantry", label:"Pantry", cats:["pantry"] }
+];
+function buildList(meals){
+  const map = new Map();
+  meals.forEach(m => m.ing.forEach(([name,qty,unit,cat]) => {
+    const key = name + "|" + unit;
+    if(map.has(key)) map.get(key).qty += qty; else map.set(key, { name, qty, unit, cat, key });
+  }));
+  const byCat = {};
+  for(const item of map.values()){ (byCat[item.cat] = byCat[item.cat] || []).push(item); }
+  const aisles = [];
+  for(const a of AISLES){
+    const items = [];
+    a.cats.forEach(c => { if(byCat[c]) items.push(...byCat[c]); });
+    items.sort((x,y) => x.name.localeCompare(y.name));
+    if(items.length) aisles.push({ label:a.label, items });
+  }
+  return aisles;
+}
+
+const state = { weekIds:[], kept:new Set(), ketoCount:3, checked:new Set() };
+
+function generateWeek(ketoCount){
+  ketoCount = clamp(ketoCount, 0, WEEK);
+  const k = sample(KETO_POOL, ketoCount);
+  const used = new Set(k.map(m => m.id));
+  const nk = sample(NON_POOL, WEEK - ketoCount, used);
+  return shuffle([...k, ...nk]).map(m => m.id);
+}
+function refillUnkept(){
+  const kept = state.weekIds.filter(id => state.kept.has(id)).map(id => BY_ID.get(id));
+  const keptKeto = kept.filter(m => m.keto).length;
+  const slots = WEEK - kept.length;
+  const used = new Set(kept.map(m => m.id));
+  const addKeto = clamp(state.ketoCount - keptKeto, 0, slots);
+  const newKeto = sample(KETO_POOL, addKeto, used);
+  newKeto.forEach(m => used.add(m.id));
+  const newNon = sample(NON_POOL, slots - addKeto, used);
+  const pool = shuffle([...newKeto, ...newNon]);
+  let fi = 0;
+  state.weekIds = state.weekIds.map(id => { if(state.kept.has(id)) return id; const next = pool[fi++]; return next ? next.id : id; });
+}
+function swapOne(id){
+  const meal = BY_ID.get(id);
+  const pool = meal.keto ? KETO_POOL : NON_POOL;
+  const repl = sample(pool, 1, new Set(state.weekIds))[0];
+  if(!repl){ toast("No other meals left to swap in"); return; }
+  state.weekIds = state.weekIds.map(x => x === id ? repl.id : x);
+  state.kept.delete(id);
+  clearHash();
+  render(new Set([repl.id]));
+  save();
+}
+
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({ week:state.weekIds, keto:state.ketoCount, kept:[...state.kept], checked:[...state.checked] })); }catch(e){}
+}
+function loadStored(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)); }catch(e){ return null; } }
+function parseHash(){
+  const m = (location.hash || "").match(/m=([0-9.]+)/);
+  if(!m) return null;
+  const ids = m[1].split(".").map(Number).filter(n => BY_ID.has(n));
+  const uniq = [...new Set(ids)];
+  if(!uniq.length) return null;
+  if(uniq.length < WEEK){ const fill = sample(MEALS, WEEK - uniq.length, new Set(uniq)); uniq.push(...fill.map(x => x.id)); }
+  return uniq.slice(0, WEEK);
+}
+function clearHash(){ if(location.hash){ history.replaceState(null, "", location.pathname + location.search); } }
+
+const checkSVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>';
+
+function render(highlightIds){
+  const hi = highlightIds || new Set(state.weekIds);
+  document.getElementById("mealList").innerHTML = state.weekIds.map((id, i) => {
+    const m = BY_ID.get(id);
+    const kept = state.kept.has(id);
+    const ing = m.ing.map(x => x[0]).join(", ");
+    const ketoTag = m.keto ? '<span class="tag tag--keto">Keto</span>' : '';
+    const anim = hi.has(id) ? ' anim' : '';
+    const delay = hi.has(id) ? (' style="animation-delay:'+(i*45)+'ms"') : '';
+    return '<li class="meal'+(kept?' is-kept':'')+anim+'" data-id="'+id+'"'+delay+'>'+
+      '<div class="meal__index">'+(i+1)+'</div>'+
+      '<div class="meal__main">'+
+        '<div class="meal__topline">'+
+          '<h3 class="meal__name">'+m.name+'</h3>'+
+          '<label class="keep"><input type="checkbox" data-keep="'+id+'"'+(kept?' checked':'')+' aria-label="Keep '+m.name+'"><span class="keep__box">'+checkSVG+'</span><span class="keep__text">Keep</span></label>'+
+        '</div>'+
+        '<div class="meal__tags"><span class="tag tag--gf">GF</span>'+ketoTag+'</div>'+
+        '<p class="meal__ing">'+ing+'</p>'+
+        '<div class="meal__actions">'+
+          '<button class="meal__btn meal__btn--recipe" data-recipe="'+id+'">View recipe</button>'+
+          '<button class="meal__btn meal__btn--swap" data-swap="'+id+'">↻ Swap</button>'+
+        '</div>'+
+      '</div></li>';
+  }).join("");
+
+  const meals = state.weekIds.map(id => BY_ID.get(id));
+  document.getElementById("shopList").innerHTML = buildList(meals).map(a =>
+    '<div class="aisle"><h3 class="aisle__name">'+a.label+'</h3><ul class="aisle__items">'+
+    a.items.map(it => {
+      const checked = state.checked.has(it.key);
+      return '<li class="item'+(checked?' is-checked':'')+'" data-key="'+it.key+'"><label class="item__row"><input type="checkbox" data-check="'+it.key+'"'+(checked?' checked':'')+'><span class="item__check">'+checkSVG+'</span><span class="item__qty">'+qtyLabel(it.qty,it.unit)+'</span><span class="item__name">'+it.name+'</span></label></li>';
+    }).join("")+'</ul></div>'
+  ).join("");
+
+  document.querySelectorAll("#ketoSeg button").forEach(b => b.classList.toggle("is-active", Number(b.dataset.keto) === state.ketoCount));
+}
+
+/* Recipe modal */
+const modal = document.getElementById("modal");
+const modalClose = document.getElementById("modalClose");
+let lastFocus = null;
+function openRecipe(id){
+  const m = BY_ID.get(id);
+  document.getElementById("modalTitle").textContent = m.name;
+  document.getElementById("modalTags").innerHTML = '<span class="tag tag--gf">GF</span>'+(m.keto?'<span class="tag tag--keto">Keto</span>':'');
+  document.getElementById("modalMeta").textContent = "⏱ "+m.time+"  ·  Serves 2";
+  document.getElementById("modalIng").innerHTML = m.ing.map(i => '<li><span class="ri-q">'+qtyLabel(i[1],i[2])+'</span>'+i[0]+'</li>').join("");
+  document.getElementById("modalSteps").innerHTML = m.steps.map(s => '<li>'+s+'</li>').join("");
+  lastFocus = document.activeElement;
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  modal.querySelector(".modal__card").scrollTop = 0;
+  modalClose.focus();
+}
+function closeRecipe(){
+  if(modal.hidden) return;
+  modal.hidden = true;
+  document.body.classList.remove("modal-open");
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+modal.addEventListener("click", e => { if(e.target.hasAttribute("data-close")) closeRecipe(); });
+document.getElementById("modalPrint").addEventListener("click", () => window.print());
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape") closeRecipe();
+  if(e.key === "Tab" && !modal.hidden){
+    const f = modal.querySelectorAll("button");
+    if(f.length){
+      const first = f[0], last = f[f.length-1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  }
+});
+
+let toastTimer;
+function toast(msg){ const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("is-on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("is-on"), 2200); }
+
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    try{ const ta = document.createElement("textarea"); ta.value = text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok; }
+    catch(_){ return false; }
+  }
+}
+function listText(){
+  let out = "SHOPPING LIST — The Weeknight Table\n\n";
+  buildList(state.weekIds.map(id => BY_ID.get(id))).forEach(a => {
+    out += a.label.toUpperCase() + "\n";
+    a.items.forEach(it => { out += "- " + itemText(it.name, it.qty, it.unit) + "\n"; });
+    out += "\n";
+  });
+  out += "Staples: salt, pepper, olive oil, everyday spices, gluten-free tamari\n";
+  return out;
+}
+
+document.getElementById("more").addEventListener("click", () => { const before = new Set(state.weekIds); refillUnkept(); clearHash(); render(new Set(state.weekIds.filter(id => !before.has(id)))); save(); });
+document.getElementById("fresh").addEventListener("click", () => { state.kept.clear(); state.weekIds = generateWeek(state.ketoCount); clearHash(); render(); save(); });
+document.getElementById("ketoSeg").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-keto]"); if(!btn) return;
+  state.ketoCount = Number(btn.dataset.keto);
+  const before = new Set(state.weekIds); refillUnkept(); clearHash();
+  render(new Set(state.weekIds.filter(id => !before.has(id)))); save();
+  toast(state.ketoCount + " keto meals this week");
+});
+document.getElementById("share").addEventListener("click", async () => {
+  const url = location.origin + location.pathname + "#m=" + state.weekIds.join(".");
+  const ok = await copyText(url);
+  toast(ok ? "Share link copied to clipboard" : "Copy failed — link is in the address bar");
+  if(!ok){ history.replaceState(null, "", "#m=" + state.weekIds.join(".")); }
+});
+document.getElementById("mealList").addEventListener("change", e => {
+  const keep = e.target.closest("input[data-keep]"); if(!keep) return;
+  const id = Number(keep.dataset.keep);
+  if(keep.checked) state.kept.add(id); else state.kept.delete(id);
+  const li = keep.closest(".meal"); if(li) li.classList.toggle("is-kept", keep.checked);
+  save();
+});
+document.getElementById("mealList").addEventListener("click", e => {
+  const rc = e.target.closest("button[data-recipe]"); if(rc){ openRecipe(Number(rc.dataset.recipe)); return; }
+  const sw = e.target.closest("button[data-swap]"); if(sw){ swapOne(Number(sw.dataset.swap)); }
+});
+document.getElementById("shopList").addEventListener("change", e => {
+  const c = e.target.closest("input[data-check]"); if(!c) return;
+  const key = c.dataset.check;
+  if(c.checked) state.checked.add(key); else state.checked.delete(key);
+  const li = c.closest(".item"); if(li) li.classList.toggle("is-checked", c.checked);
+  save();
+});
+document.getElementById("copy").addEventListener("click", async () => { const ok = await copyText(listText()); toast(ok ? "Shopping list copied" : "Copy failed"); });
+document.getElementById("clear").addEventListener("click", () => { state.checked.clear(); render(new Set()); save(); toast("Cleared all checkmarks"); });
+document.getElementById("print").addEventListener("click", () => window.print());
+
+(function init(){
+  const shared = parseHash();
+  const stored = loadStored();
+  if(stored && typeof stored.keto === "number") state.ketoCount = clamp(stored.keto, 0, WEEK);
+  if(shared){
+    state.weekIds = shared; state.kept = new Set(); state.checked = new Set();
+    render(); save(); toast("Loaded a shared week");
+  } else if(stored && Array.isArray(stored.week) && stored.week.length === WEEK && stored.week.every(id => BY_ID.has(id))){
+    state.weekIds = stored.week; state.kept = new Set((stored.kept || []).filter(id => BY_ID.has(id))); state.checked = new Set(stored.checked || []);
+    render(new Set());
+  } else {
+    state.weekIds = generateWeek(state.ketoCount); render(); save();
+  }
+})();
+</script>
+</body>
+</html>
