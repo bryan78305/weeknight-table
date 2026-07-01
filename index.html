@@ -74,6 +74,15 @@
   .meal.is-kept{ border-left-color:var(--green); background:#fcfdfb; }
   .meal__index{ font-family:var(--mono); font-weight:700; font-size:.8rem; background:var(--green-soft); color:var(--green-deep); width:26px; height:26px; border-radius:8px; display:grid; place-items:center; margin-top:2px; }
   .meal__main{ min-width:0; }
+  .meal__img{ position:relative; width:92px; height:92px; border-radius:12px; overflow:hidden; background:#f2ebdd; border:1px solid var(--line); }
+  .meal__img svg{ width:100%; height:100%; display:block; }
+  .meal__num{ position:absolute; top:5px; left:5px; font-family:var(--mono); font-weight:700; font-size:.7rem; background:rgba(250,247,241,.86); color:var(--green-deep); min-width:19px; height:19px; padding:0 4px; border-radius:6px; display:grid; place-items:center; }
+  .recipe-imgs{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 6px; }
+  .recipe-img{ aspect-ratio:4/3; border-radius:12px; overflow:hidden; background:#f2ebdd; border:1px solid var(--line); }
+  .recipe-img svg{ width:100%; height:100%; display:block; }
+  .dish-slot{ position:relative; display:block; width:100%; height:100%; }
+  .dish-photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s ease; }
+  .dish-photo.is-on{ opacity:1; }
   .meal__topline{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
   .meal__name{ flex:1; font-size:1.06rem; font-weight:700; line-height:1.18; }
   .meal__topline .keep{ margin-top:1px; }
@@ -280,6 +289,7 @@
       <h2 class="modal__title" id="modalTitle"></h2>
       <div class="modal__tags" id="modalTags"></div>
       <div class="modal__meta" id="modalMeta"></div>
+      <div class="recipe-imgs" id="modalImgs"></div>
       <div class="recipe-cols">
         <div>
           <p class="recipe-h">You will need</p>
@@ -1112,6 +1122,181 @@ function render(highlightIds){
   updateKeepAll();
 }
 
+/* ----- dish illustrations (procedural SVG, no assets) ----- */
+const DishArt=(function(){
+/* Procedural dish illustration generator — returns inline SVG strings.
+   Deterministic per recipe id so a dish always looks the same. */
+
+function seedRand(seed){ let t = seed >>> 0; return function(){ t += 0x6D2B79F5; let x = Math.imul(t ^ (t>>>15), 1|t); x ^= x + Math.imul(x ^ (x>>>7), 61|x); return ((x ^ (x>>>14))>>>0)/4294967296; }; }
+
+/* shape helpers */
+const circle=(cx,cy,r,fill,st,sw)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"${st?` stroke="${st}" stroke-width="${sw}"`:''}/>`;
+const ell=(cx,cy,rx,ry,fill,rot,st,sw)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}"${rot?` transform="rotate(${rot} ${cx} ${cy})"`:''}${st?` stroke="${st}" stroke-width="${sw}"`:''}/>`;
+const rr=(x,y,w,h,r,fill,rot,cx,cy,st,sw)=>{cx=cx??(x+w/2);cy=cy??(y+h/2);return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}"${rot?` transform="rotate(${rot} ${cx} ${cy})"`:''}${st?` stroke="${st}" stroke-width="${sw}"`:''}/>`;};
+
+/* proteins (centered at x,y) */
+function pSteak(x,y,s,rot){const w=20*s,h=13*s;return rr(x-w/2,y-h/2,w,h,5*s,'#8a5a3b',rot,x,y,'#6e4527',0.8)+`<g transform="rotate(${rot} ${x} ${y})" stroke="#5c3920" stroke-width="${1.1*s}" stroke-linecap="round"><line x1="${x-w/2+3*s}" y1="${y-3*s}" x2="${x+w/2-3*s}" y2="${y-3*s}"/><line x1="${x-w/2+3*s}" y1="${y+3*s}" x2="${x+w/2-3*s}" y2="${y+3*s}"/></g>`;}
+function pPatty(x,y,s){return ell(x,y,10*s,9*s,'#7a4f34',0,'#5f3c26',0.8)+ell(x-2*s,y-2*s,3*s,2*s,'#92623f');}
+function pMeatballs(x,y,s,rng){let o='';for(let i=0;i<3;i++){const a=i*2.1;o+=circle(x+Math.cos(a)*5*s,y+Math.sin(a)*4*s,4.2*s,'#8a5a3b','#6e4527',0.6)+circle(x+Math.cos(a)*5*s-1*s,y+Math.sin(a)*4*s-1*s,1.3*s,'#a06f4a');}return o;}
+function pShrimp(x,y,s,rot){const d=`M ${x-5*s} ${y-3*s} A ${5*s} ${5*s} 0 1 1 ${x-5*s} ${y+4*s}`;return `<path d="${d}" fill="none" stroke="#e2856b" stroke-width="${4*s}" stroke-linecap="round" transform="rotate(${rot} ${x} ${y})"/><path d="${d}" fill="none" stroke="#c96b50" stroke-width="${1*s}" stroke-linecap="round" transform="rotate(${rot} ${x} ${y})" opacity="0.5"/>`;}
+function pFish(x,y,s,rot,color){color=color||'#e3886b';const w=22*s,h=12*s;return `<path d="M ${x-w/2} ${y} Q ${x-w/4} ${y-h/2} ${x} ${y-h/2+s} Q ${x+w/4} ${y-h/2} ${x+w/2} ${y} Q ${x+w/4} ${y+h/2} ${x} ${y+h/2-s} Q ${x-w/4} ${y+h/2} ${x-w/2} ${y} Z" fill="${color}" stroke="#0000001f" stroke-width="0.5" transform="rotate(${rot} ${x} ${y})"/><g transform="rotate(${rot} ${x} ${y})" stroke="#ffffff66" stroke-width="${0.9*s}" fill="none"><path d="M ${x-6*s} ${y-2*s} q 3 2 6 0"/><path d="M ${x-6*s} ${y+s} q 3 2 6 0"/><path d="M ${x} ${y-2*s} q 3 2 6 0"/><path d="M ${x} ${y+s} q 3 2 6 0"/></g>`;}
+function pEgg(x,y,s){return ell(x,y,9*s,7*s,'#fbf7ee',0,'#ece0cb',0.5)+circle(x,y,3.4*s,'#f3b53f');}
+function pBacon(x,y,s,rot){const d=`M ${x-9*s} ${y} q ${3*s} ${-3*s} ${6*s} 0 q ${3*s} ${3*s} ${6*s} 0 q ${3*s} ${-3*s} ${6*s} 0`;return `<path d="${d}" fill="none" stroke="#a8543c" stroke-width="${4.5*s}" stroke-linecap="round" transform="rotate(${rot} ${x} ${y})"/><path d="${d}" fill="none" stroke="#e8d8c0" stroke-width="${1.2*s}" stroke-linecap="round" transform="rotate(${rot} ${x} ${y})" opacity="0.7"/>`;}
+function pSausage(x,y,s,rot){let o='';for(let i=0;i<2;i++)o+=rr(x-7*s+i*8*s,y-3.5*s,9*s,7*s,3.5*s,'#b9794e',rot+i*10,x,y,'#9c6038',0.6);return o;}
+function pPoultry(x,y,s,rot){const w=18*s,h=13*s;return rr(x-w/2,y-h/2,w,h,6*s,'#cda067',rot,x,y,'#b0854e',0.7)+`<g transform="rotate(${rot} ${x} ${y})" stroke="#9c7340" stroke-width="${0.9*s}" stroke-linecap="round"><line x1="${x-5*s}" y1="${y-3*s}" x2="${x-s}" y2="${y+3*s}"/><line x1="${x+s}" y1="${y-3*s}" x2="${x+5*s}" y2="${y+3*s}"/></g>`;}
+function pPork(x,y,s,rot){const w=18*s,h=12*s;return rr(x-w/2,y-h/2,w,h,5*s,'#b3784a',rot,x,y,'#946038',0.7)+ell(x-3*s,y-2*s,3*s,1.6*s,'#c89065');}
+function pTofu(x,y,s,rng){let o='';for(let i=0;i<3;i++){const dx=(i-1)*7*s;o+=rr(x+dx-3*s,y-3*s+(rng()*4-2)*s,6.5*s,6.5*s,1.5*s,'#f3ecd9',rng()*20-10,x+dx,y,'#e3d8bb',0.6);}return o;}
+
+/* starch beds (lower-center) */
+function bedRice(rng){let o=ell(50,60,30,18,'#efe7d6');for(let i=0;i<34;i++){const a=rng()*6.28,r=rng()*26;o+=ell(50+Math.cos(a)*r,60+Math.sin(a)*r*0.6,1.8,0.9,'#f7f1e6',rng()*180);}return o;}
+function bedCream(){return ell(50,60,30,18,'#f3e3a8',0,'#e9d68f',0.6);}
+function bedPasta(rng){let o='';for(let i=0;i<8;i++){const a=rng()*6.28,r=rng()*22,px=50+Math.cos(a)*r,py=60+Math.sin(a)*r*0.6;o+=`<path d="M ${px-7} ${py} q 4 -5 8 0 q 4 5 8 0" fill="none" stroke="#e6c987" stroke-width="3" stroke-linecap="round"/>`;}return o;}
+function bedPotato(rng){let o='';for(let i=0;i<6;i++){const a=rng()*6.28,r=rng()*22;o+=rr(50+Math.cos(a)*r-5,60+Math.sin(a)*r*0.6-4,10,8,3,'#ecd9a8',rng()*40-20,null,null,'#dcc592',0.5);}return o;}
+function bedTortilla(){return `<path d="M 30 66 Q 50 50 70 66 Q 50 74 30 66 Z" fill="#e7c79a" stroke="#d3ad7e" stroke-width="0.8"/><path d="M 34 60 Q 50 48 66 60 Q 50 66 34 60 Z" fill="#edd2a8"/>`;}
+function bedGrain(rng){let o=ell(50,60,28,17,'#e9dcbf');for(let i=0;i<40;i++){const a=rng()*6.28,r=rng()*24;o+=circle(50+Math.cos(a)*r,60+Math.sin(a)*r*0.6,0.9,'#d8c79f');}return o;}
+function bedLegume(rng){let o='';for(let i=0;i<22;i++){const a=rng()*6.28,r=rng()*24;o+=ell(50+Math.cos(a)*r,60+Math.sin(a)*r*0.6,2.2,1.5,i%2?'#7a5a44':'#caa06a',rng()*180);}return o;}
+
+/* veg accents */
+function vLeafy(x,y,s,rng){let o='';const c=['#5f8a4e','#6f9a57','#557e44'];for(let i=0;i<4;i++){const a=i*1.7+rng();const px=x+Math.cos(a)*5*s,py=y+Math.sin(a)*4*s;o+=`<path d="M ${px} ${py-5*s} Q ${px+4*s} ${py} ${px} ${py+5*s} Q ${px-4*s} ${py} ${px} ${py-5*s} Z" fill="${c[i%3]}" transform="rotate(${a*57} ${px} ${py})"/>`;}return o;}
+function vBroccoli(x,y,s,rng){let o='';for(let i=0;i<6;i++){const a=rng()*6.28,r=rng()*4*s;o+=circle(x+Math.cos(a)*r,y+Math.sin(a)*r-s,2.4*s,i%2?'#4f7a43':'#5c8a4d');}return rr(x-s,y+2*s,2*s,4*s,s,'#7a9a5c')+o;}
+function vTomato(x,y,s,rng){let o='';for(let i=0;i<3;i++){const dx=(i-1)*5*s,dy=(rng()*3-1.5)*s;o+=circle(x+dx,y+dy,3*s,'#c8503e')+circle(x+dx-s,y+dy-s,0.9*s,'#e07a68');}return o;}
+function vAvocado(x,y,s){return `<path d="M ${x-5*s} ${y} a ${5*s} ${5*s} 0 1 1 ${10*s} 0 a ${3*s} ${4*s} 0 1 0 ${-10*s} 0 Z" fill="#9bb86a"/>`;}
+function vPepper(x,y,s,rng){let o='';const c=['#c64b3a','#5f8a4e','#e2a83f'];for(let i=0;i<3;i++)o+=rr(x-6*s+i*4*s,y-3*s,3*s,7*s,1.5*s,c[i%3],rng()*30-15,x,y);return o;}
+function vCorn(x,y,s,rng){let o='';for(let i=0;i<10;i++)o+=circle(x+(rng()*10-5)*s,y+(rng()*7-3.5)*s,1.1*s,'#e7c14b');return o;}
+function vCheese(x,y,s,rng){let o='';for(let i=0;i<4;i++)o+=`<path d="M ${x+(rng()*8-4)*s} ${y} l ${3*s} ${-2*s} l ${s} ${3*s} Z" fill="#f0c64f" opacity="0.9"/>`;return o;}
+function vDiced(x,y,s,rng,color){let o='';for(let i=0;i<6;i++)o+=rr(x+(rng()*10-5)*s,y+(rng()*7-3.5)*s,2.4*s,2.4*s,0.6*s,color,rng()*40);return o;}
+
+function garnish(rng){let o='';for(let i=0;i<8;i++){const a=rng()*6.28,r=10+rng()*22;o+=circle(50+Math.cos(a)*r,56+Math.sin(a)*r*0.7,0.8,'#3f6a36');}return o;}
+
+/* profile from ingredients */
+function dishProfile(m){
+  const names=m.ing.map(i=>String(i[0]).toLowerCase());
+  const nm=m.name.toLowerCase();
+  const has=(...k)=>names.some(n=>k.some(x=>n.includes(x)));
+  const nmh=(...k)=>k.some(x=>nm.includes(x));
+  let protein='generic';
+  const eggForward = nmh('scramble','frittata','omelet','huevos','benedict','quiche','egg bake') || (has('egg') && !has('chicken','turkey','beef','steak','sirloin','pork','sausage','bacon','shrimp','salmon','tuna','fish','tofu','meatball'));
+  if(has('shrimp','prawn'))protein='shrimp';
+  else if(has('salmon'))protein='salmon';
+  else if(has('tuna'))protein='tuna';
+  else if(has('tilapia','cod','halibut','mahi')||(has('fish')&&!has('fish sauce')))protein='fish';
+  else if(eggForward)protein='egg';
+  else if(nmh('burger'))protein='patty';
+  else if(has('meatball')||nmh('meatball'))protein='meatball';
+  else if(has('sausage'))protein='sausage';
+  else if(has('bacon')&&!has('chicken','turkey','beef','steak'))protein='bacon';
+  else if(has('steak','sirloin')||nmh('steak'))protein='steak';
+  else if(has('beef'))protein='meatball';
+  else if(has('pork','chop')||nmh('carnitas','pork'))protein='pork';
+  else if(has('chicken','turkey'))protein='poultry';
+  else if(has('egg'))protein='egg';
+  else if(has('tofu'))protein='tofu';
+  else if(has('lentil','chickpea','bean'))protein='legume';
+  let starch=null;
+  if(has('rice')||nmh('fried rice'))starch='rice';
+  else if(has('polenta','grits')||nmh('mash','creamed','puree')||(has('potato')&&nmh('mash')))starch='cream';
+  else if(has('pasta','spaghetti','noodle','ziti','penne','macaroni','lasagna','fettuccine')||nmh('pasta','lasagna','noodle','spaghetti','ziti','alfredo','primavera'))starch='pasta';
+  else if(has('potato')||nmh('hash','fries'))starch='potato';
+  else if(has('tortilla')||nmh('taco','burrito','quesadilla','nachos','wrap','fajita','enchilada'))starch='tortilla';
+  else if(has('quinoa','couscous'))starch='grain';
+  else if(has('lentil')&&protein==='legume')starch='legume';
+  const veg=[];const addv=t=>{if(!veg.includes(t)&&veg.length<3)veg.push(t);};
+  if(has('spinach','kale','greens','lettuce','arugula','romaine')||nmh('salad'))addv('leafy');
+  if(has('broccoli'))addv('broccoli');
+  if(has('tomato','marinara','salsa'))addv('tomato');
+  if(has('avocado'))addv('avocado');
+  if(has('pepper','poblano','jalapeno'))addv('pepper');
+  if(has('corn'))addv('corn');
+  if(has('cheese','cheddar','mozzarella','parmesan','feta','cotija'))addv('cheese');
+  if(has('carrot'))addv('carrot');
+  if(has('zucchini'))addv('zucchini');
+  if(has('mushroom'))addv('mushroom');
+  if(has('asparagus'))addv('asparagus');
+  if(has('cabbage','slaw'))addv('slaw');
+  if(has('pea'))addv('pea');
+  return {protein,starch,veg};
+}
+
+function proteinDraw(t){switch(t){
+  case 'steak':return[pSteak,2];case 'patty':return[pPatty,2];case 'meatball':return[pMeatballs,1];
+  case 'shrimp':return[pShrimp,4];case 'salmon':return[(x,y,s,r)=>pFish(x,y,s,r,'#e3886b'),2];
+  case 'fish':return[(x,y,s,r)=>pFish(x,y,s,r,'#ece1d4'),2];case 'tuna':return[(x,y,s,r)=>pFish(x,y,s,r,'#b1493f'),2];
+  case 'egg':return[pEgg,2];case 'bacon':return[pBacon,2];case 'sausage':return[pSausage,2];
+  case 'poultry':return[pPoultry,2];case 'pork':return[pPork,2];case 'tofu':return[pTofu,1];
+  case 'legume':return[()=>'',0];default:return[pPoultry,2];}}
+
+function vegDraw(v,x,y,rng){switch(v){
+  case 'leafy':return vLeafy(x,y,1,rng);case 'broccoli':return vBroccoli(x,y,1,rng);
+  case 'tomato':return vTomato(x,y,1,rng);case 'avocado':return vAvocado(x,y,1);
+  case 'pepper':return vPepper(x,y,1,rng);case 'corn':return vCorn(x,y,1,rng);case 'cheese':return vCheese(x,y,1,rng);
+  case 'carrot':return vDiced(x,y,1,rng,'#d98a3f');case 'zucchini':return vDiced(x,y,1,rng,'#8aa86a');
+  case 'mushroom':return vDiced(x,y,1,rng,'#cbb189');case 'asparagus':return vDiced(x,y,1,rng,'#7fa24a');
+  case 'slaw':return vDiced(x,y,1,rng,'#b07ab0');case 'pea':return vDiced(x,y,1,rng,'#6f9a4f');
+  default:return vDiced(x,y,1,rng,'#7a9a5c');}}
+
+function scatter(n,rng,baseY){const pts=[];const spread=[[50,baseY],[38,baseY+4],[62,baseY+4],[44,baseY-6],[56,baseY-6]];for(let i=0;i<n;i++){const b=spread[i%spread.length];pts.push([b[0]+(rng()*6-3),b[1]+(rng()*5-2.5),rng()*60-30]);}return pts;}
+
+function plate(m){
+  const rng=seedRand((m.id*2654435761)>>>0);
+  const p=dishProfile(m);
+  let food='';
+  if(p.starch==='rice')food+=bedRice(rng);
+  else if(p.starch==='cream')food+=bedCream();
+  else if(p.starch==='pasta')food+=bedPasta(rng);
+  else if(p.starch==='potato')food+=bedPotato(rng);
+  else if(p.starch==='tortilla')food+=bedTortilla();
+  else if(p.starch==='grain')food+=bedGrain(rng);
+  else if(p.starch==='legume')food+=bedLegume(rng);
+  const [fn,count]=proteinDraw(p.protein);
+  for(const [px,py,rot] of scatter(count,rng,p.starch?44:49))food+=fn(px,py,1,rot);
+  let vi=0;const vpos=[[34,45],[66,45],[50,40]];
+  for(const v of p.veg){const b=vpos[vi%3];vi++;food+=vegDraw(v,b[0],b[1],rng);}
+  food+=garnish(rng);
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><defs><clipPath id="w${m.id}"><circle cx="50" cy="52" r="35.5"/></clipPath><radialGradient id="bg${m.id}" cx="50%" cy="38%" r="75%"><stop offset="0%" stop-color="#f6f0e6"/><stop offset="100%" stop-color="#ece3d3"/></radialGradient></defs><rect width="100" height="100" fill="url(#bg${m.id})"/><ellipse cx="50" cy="55" rx="40" ry="40" fill="#0000000f"/><circle cx="50" cy="52" r="39" fill="#f8f3ea"/><circle cx="50" cy="52" r="35.5" fill="#f2ebdd"/><g clip-path="url(#w${m.id})">${food}</g><circle cx="50" cy="52" r="35.5" fill="none" stroke="#e6ddcb" stroke-width="1"/><circle cx="50" cy="52" r="39" fill="none" stroke="#e1d7c4" stroke-width="1.4"/></svg>`;
+}
+
+function starchEmblem(x,y,type,rng){
+  if(type==='rice'||type==='grain'){let o='';for(let i=0;i<14;i++)o+=ell(x+(rng()*12-6),y+(rng()*8-4),1.6,0.8,'#f1ead9',rng()*180);return o;}
+  if(type==='cream')return ell(x,y,8,5,'#f3e3a8',0,'#e9d68f',0.5);
+  if(type==='pasta'){let o='';for(let i=0;i<3;i++)o+=`<path d="M ${x-6} ${y+i*2-2} q 4 -4 8 0 q 4 4 8 0" fill="none" stroke="#e6c987" stroke-width="2.4" stroke-linecap="round"/>`;return o;}
+  if(type==='potato'){let o='';for(let i=0;i<4;i++)o+=rr(x-6+i*4,y-3+(rng()*4-2),7,6,2,'#ecd9a8',rng()*30,null,null,'#dcc592',0.4);return o;}
+  if(type==='tortilla')return `<circle cx="${x}" cy="${y}" r="8" fill="#e7c79a" stroke="#d3ad7e" stroke-width="0.6"/><circle cx="${x}" cy="${y}" r="5" fill="#edd2a8"/>`;
+  if(type==='legume'){let o='';for(let i=0;i<8;i++)o+=ell(x+(rng()*12-6),y+(rng()*8-4),2,1.3,i%2?'#7a5a44':'#caa06a',rng()*180);return o;}
+  return '';
+}
+
+function flatlay(m){
+  const rng=seedRand((m.id*40503)>>>0);
+  const p=dishProfile(m);
+  let bg=`<rect width="100" height="100" fill="#efe7d8"/>`;
+  for(let i=0;i<6;i++)bg+=`<line x1="0" y1="${8+i*15}" x2="100" y2="${8+i*15+(rng()*4-2)}" stroke="#0000000a" stroke-width="0.8"/>`;
+  const spots=[[24,30],[50,27],[76,31],[31,67],[58,70],[82,63]];
+  const items=[];
+  const [fn]=proteinDraw(p.protein);
+  if(p.protein!=='legume'&&p.protein!=='generic')items.push((x,y)=>fn(x,y,1.0,rng()*40-20));
+  if(p.starch)items.push((x,y)=>starchEmblem(x,y,p.starch,rng));
+  for(const v of p.veg)items.push((x,y)=>vegDraw(v,x,y,rng));
+  if(items.length<2)items.push((x,y)=>vDiced(x,y,1,rng,'#7a9a5c'));
+  let out=bg;
+  items.slice(0,6).forEach((draw,i)=>{const [x,y]=spots[i];out+=`<circle cx="${x}" cy="${y}" r="11.5" fill="#f8f3ea" stroke="#e3d9c6" stroke-width="0.8"/>`+`<circle cx="${x}" cy="${y}" r="11.5" fill="#00000006"/>`+draw(x,y);});
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">${out}</svg>`;
+}
+
+
+return {plate,flatlay};
+})();
+
+/* ----- real photos when present, illustration as fallback ----- */
+const PHOTO_DIR = "images", PHOTO_EXT = "jpg";  // drop dish photos in /images named by meal id, e.g. images/16.jpg (and optional images/16-2.jpg for the 2nd recipe shot)
+function dishImg(m, kind){
+  const file = kind === "alt" ? (m.id + "-2") : m.id;
+  const svg = kind === "alt" ? DishArt.flatlay(m) : DishArt.plate(m);
+  const alt = String(m.name).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return '<span class="dish-slot">' + svg +
+    '<img class="dish-photo" alt="' + alt + '" src="' + PHOTO_DIR + '/' + file + '.' + PHOTO_EXT + '" onload="dishImgOk(this)" onerror="this.remove()"></span>';
+}
+function dishImgOk(img){ img.classList.add("is-on"); }
+
 function renderMeals(hi){
   document.getElementById("mealList").innerHTML = state.weekIds.map((id, i) => {
     const m = BY_ID.get(id);
@@ -1121,7 +1306,7 @@ function renderMeals(hi){
     const anim = hi.has(id) ? ' anim' : '';
     const delay = hi.has(id) ? (' style="animation-delay:'+(i*45)+'ms"') : '';
     return '<li class="meal'+(kept?' is-kept':'')+anim+'" data-id="'+id+'"'+delay+'>'+
-      '<div class="meal__index">'+(i+1)+'</div>'+
+      '<div class="meal__img">'+dishImg(m,'card')+'<span class="meal__num">'+(i+1)+'</span></div>'+
       '<div class="meal__main">'+
         '<div class="meal__topline">'+
           '<h3 class="meal__name">'+m.name+'</h3>'+
@@ -1173,6 +1358,7 @@ function openRecipe(id){
   document.getElementById("modalTitle").textContent = m.name;
   document.getElementById("modalTags").innerHTML = '<span class="tag tag--gf">GF</span>'+(m.keto?'<span class="tag tag--keto">Keto</span>':'');
   document.getElementById("modalMeta").textContent = "⏱ "+m.time+"  ·  Serves 2";
+  document.getElementById("modalImgs").innerHTML = '<div class="recipe-img">'+dishImg(m,'hero')+'</div><div class="recipe-img">'+dishImg(m,'alt')+'</div>';
   document.getElementById("modalIng").innerHTML = m.ing.map(i => '<li><span class="ri-q">'+qtyLabel(i[1],i[2])+'</span>'+i[0]+'</li>').join("");
   document.getElementById("modalSteps").innerHTML = m.steps.map(s => '<li>'+s+'</li>').join("");
   lastFocus = document.activeElement;
