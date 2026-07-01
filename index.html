@@ -77,7 +77,7 @@
   .meal__img{ position:relative; width:92px; height:92px; border-radius:12px; overflow:hidden; background:#f2ebdd; border:1px solid var(--line); }
   .meal__img svg{ width:100%; height:100%; display:block; }
   .meal__num{ position:absolute; top:5px; left:5px; font-family:var(--mono); font-weight:700; font-size:.7rem; background:rgba(250,247,241,.86); color:var(--green-deep); min-width:19px; height:19px; padding:0 4px; border-radius:6px; display:grid; place-items:center; }
-  .recipe-imgs{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 6px; }
+  .recipe-imgs{ display:grid; grid-template-columns:1fr; gap:10px; margin:14px 0 6px; }
   .recipe-img{ aspect-ratio:4/3; border-radius:12px; overflow:hidden; background:#f2ebdd; border:1px solid var(--line); }
   .recipe-img svg{ width:100%; height:100%; display:block; }
   .dish-slot{ position:relative; display:block; width:100%; height:100%; }
@@ -1292,7 +1292,7 @@ function dishImg(m, kind){
   const file = kind === "alt" ? (m.id + "-2") : m.id;
   const svg = kind === "alt" ? DishArt.flatlay(m) : DishArt.plate(m);
   const alt = String(m.name).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-  return '<span class="dish-slot">' + svg +
+  return '<span class="dish-slot">' +
     '<img class="dish-photo" alt="' + alt + '" src="' + PHOTO_DIR + '/' + file + '.' + PHOTO_EXT + '" onload="dishImgOk(this)" onerror="this.remove()"></span>';
 }
 function dishImgOk(img){ img.classList.add("is-on"); }
@@ -1358,7 +1358,7 @@ function openRecipe(id){
   document.getElementById("modalTitle").textContent = m.name;
   document.getElementById("modalTags").innerHTML = '<span class="tag tag--gf">GF</span>'+(m.keto?'<span class="tag tag--keto">Keto</span>':'');
   document.getElementById("modalMeta").textContent = "⏱ "+m.time+"  ·  Serves 2";
-  document.getElementById("modalImgs").innerHTML = '<div class="recipe-img">'+dishImg(m,'hero')+'</div><div class="recipe-img">'+dishImg(m,'alt')+'</div>';
+  document.getElementById("modalImgs").innerHTML = '<div class="recipe-img">'+dishImg(m,'hero')+'</div>';
   document.getElementById("modalIng").innerHTML = m.ing.map(i => '<li><span class="ri-q">'+qtyLabel(i[1],i[2])+'</span>'+i[0]+'</li>').join("");
   document.getElementById("modalSteps").innerHTML = m.steps.map(s => '<li>'+s+'</li>').join("");
   lastFocus = document.activeElement;
